@@ -1,0 +1,68 @@
+### Exemplo numerico da Documentacao Tecnica (esperado: total 4383.33)
+POST http://localhost:8080/v1/encargos/calcular
+Content-Type: application/json
+
+{
+  "numeroContrato": "000012345678",
+  "codigoProduto": "CDC",
+  "rating": "B",
+  "saldoDevedor": 100000.00,
+  "dataUltimaApuracao": "2026-10-25",
+  "dataVencimento": "2026-11-14",
+  "dataReferencia": "2026-11-24"
+}
+
+### Rotina diaria, contrato em dia (esperado: total 67.67)
+POST http://localhost:8080/v1/encargos/calcular
+Content-Type: application/json
+
+{
+  "numeroContrato": "000012345678",
+  "codigoProduto": "CDC",
+  "rating": "B",
+  "saldoDevedor": 100000.00,
+  "dataUltimaApuracao": "2026-11-23",
+  "dataVencimento": "2026-12-14",
+  "dataReferencia": "2026-11-24"
+}
+
+### Rejeicao: rating invalido (esperado: 422, codigo 40)
+POST http://localhost:8080/v1/encargos/calcular
+Content-Type: application/json
+
+{
+  "numeroContrato": "000000000002",
+  "codigoProduto": "CDC",
+  "rating": "X",
+  "saldoDevedor": 100000.00,
+  "dataUltimaApuracao": "2026-10-25",
+  "dataVencimento": "2026-11-14",
+  "dataReferencia": "2026-11-24"
+}
+
+### Lote misto: o contrato invalido nao interrompe os demais
+POST http://localhost:8080/v1/encargos/calcular-lote
+Content-Type: application/json
+
+{
+  "contratos": [
+    { "numeroContrato": "000000000001", "codigoProduto": "CDC", "rating": "B", "saldoDevedor": 100000.00,
+      "dataUltimaApuracao": "2026-10-25", "dataVencimento": "2026-11-14", "dataReferencia": "2026-11-24" },
+    { "numeroContrato": "000000000002", "codigoProduto": "XYZ", "rating": "B", "saldoDevedor": 5000.00,
+      "dataUltimaApuracao": "2026-10-25", "dataVencimento": "2026-11-14", "dataReferencia": "2026-11-24" },
+    { "numeroContrato": "000000000003", "codigoProduto": "CHE", "rating": "H", "saldoDevedor": 3200.00,
+      "dataUltimaApuracao": "2026-10-24", "dataVencimento": "2026-11-20", "dataReferencia": "2026-11-24" }
+  ]
+}
+
+### Taxa vigente do CDC hoje (1.80) e em marco/2026 (1.95)
+GET http://localhost:8080/v1/taxas/CDC?data=2026-11-24
+
+###
+GET http://localhost:8080/v1/taxas/CDC?data=2026-03-01
+
+### Saude e metricas
+GET http://localhost:8080/actuator/health
+
+###
+GET http://localhost:8080/actuator/metrics/juros.rejeicoes

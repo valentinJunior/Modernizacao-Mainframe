@@ -1,0 +1,179 @@
+//JURD0100 JOB (BCO,JUR,0001),'APROP JUROS DIARIA',
+//             CLASS=A,MSGCLASS=X,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID,REGION=0M
+//*-------------------------------------------------------------------
+//* SISTEMA  : JUR - APROPRIACAO DE JUROS DE CONTRATOS DE CREDITO
+//* JOB      : JURD0100
+//* OBJETIVO : APURAR DIARIAMENTE OS JUROS REMUNERATORIOS, JUROS DE
+//*            MORA E MULTA DOS CONTRATOS DE CREDITO ATIVOS E GERAR
+//*            O RESUMO POR AGENCIA/PRODUTO PARA A CONTABILIDADE.
+//* PERIODIC.: DIARIA - APOS O FECHAMENTO DO MOVIMENTO (CONTROL-M)
+//* PREDEC.  : JURD0090 (ATUALIZACAO DE SALDOS DO DIA)
+//* SUCESSOR : CTBD0300 (LANCAMENTOS CONTABEIS DE RENDAS DE CREDITO)
+//*-------------------------------------------------------------------
+//* STEP010 - UNLOAD DB2 DOS CONTRATOS DE CREDITO       (DSNTIAUL)
+//* STEP020 - UNLOAD DB2 DAS TAXAS VIGENTES POR PRODUTO (DSNTIAUL)
+//* STEP030 - SORT: FILTRA ATIVOS E ORDENA POR PRODUTO  (DFSORT)
+//* STEP040 - CALCULO DOS JUROS - JURB0100 + JURS0100   (COBOL)
+//* STEP050 - SORT: RESUMO POR AGENCIA/PRODUTO          (DFSORT)
+//*-------------------------------------------------------------------
+//* RESTART  : TODOS OS ARQUIVOS SAO GDG (+1). EM CASO DE ABEND,
+//*            DELETAR AS GERACOES CRIADAS NA EXECUCAO E REINICIAR
+//*            DESDE O STEP010.
+//* ATENCAO  : A DATA DE REFERENCIA ('2026-11-24') E INFORMADA NO
+//*            STEP020 (VIGENCIA DA TAXA) E NO STEP040 (PARM). EM
+//*            PRODUCAO E SUBSTITUIDA PELO CONTROL-M (%%ODATE).
+//*-------------------------------------------------------------------
+//*
+//*-------------------------------------------------------------------
+//* STEP010 - UNLOAD DOS CONTRATOS DE CREDITO (TB_CONTRATO_CREDITO)
+//*           SAIDA: LAYOUT JURCCONT - LRECL 50
+//*-------------------------------------------------------------------
+//STEP010  EXEC PGM=IKJEFT01,DYNAMNBR=20
+//STEPLIB  DD DSN=DSN.DB2P.SDSNLOAD,DISP=SHR
+//SYSTSPRT DD SYSOUT=*
+//SYSPRINT DD SYSOUT=*
+//SYSUDUMP DD SYSOUT=*
+//SYSPUNCH DD SYSOUT=*
+//SYSREC00 DD DSN=BCO.JUR.UNLD.CONTRATO(+1),
+//            DISP=(NEW,CATLG,DELETE),
+//            UNIT=SYSDA,SPACE=(CYL,(100,20),RLSE)
+//SYSTSIN  DD *
+ DSN SYSTEM(DB2P)
+ RUN PROGRAM(DSNTIAUL) PLAN(DSNTIB12) PARMS('SQL') -
+     LIB('DSN.DB2P.RUNLIB.LOAD')
+ END
+/*
+//SYSIN    DD *
+ SELECT NR_CONTRATO
+       ,CD_AGENCIA
+       ,CD_PRODUTO
+       ,CD_RATING
+       ,VL_SALDO_DEVEDOR
+       ,CHAR(DT_ULT_APURACAO, ISO)
+       ,CHAR(DT_VENCIMENTO, ISO)
+       ,ST_CONTRATO
+   FROM BCO.TB_CONTRATO_CREDITO;
+/*
+//*
+//*-------------------------------------------------------------------
+//* STEP020 - UNLOAD DAS TAXAS VIGENTES NA DATA DE REFERENCIA
+//*           SAIDA: LAYOUT JURCTAXA - LRECL 45 - ORDENADO POR PRODUTO
+//*-------------------------------------------------------------------
+//STEP020  EXEC PGM=IKJEFT01,DYNAMNBR=20,COND=(4,LT)
+//STEPLIB  DD DSN=DSN.DB2P.SDSNLOAD,DISP=SHR
+//SYSTSPRT DD SYSOUT=*
+//SYSPRINT DD SYSOUT=*
+//SYSUDUMP DD SYSOUT=*
+//SYSPUNCH DD SYSOUT=*
+//SYSREC00 DD DSN=BCO.JUR.UNLD.TAXAPROD(+1),
+//            DISP=(NEW,CATLG,DELETE),
+//            UNIT=SYSDA,SPACE=(TRK,(5,5),RLSE)
+//SYSTSIN  DD *
+ DSN SYSTEM(DB2P)
+ RUN PROGRAM(DSNTIAUL) PLAN(DSNTIB12) PARMS('SQL') -
+     LIB('DSN.DB2P.RUNLIB.LOAD')
+ END
+/*
+//SYSIN    DD *
+ SELECT CD_PRODUTO
+       ,DS_PRODUTO
+       ,PC_TAXA_MENSAL
+       ,PC_MORA_MENSAL
+       ,PC_MULTA
+   FROM BCO.TB_TAXA_PRODUTO
+  WHERE DT_INI_VIGENCIA <= '2026-11-24'
+    AND DT_FIM_VIGENCIA >= '2026-11-24'
+  ORDER BY CD_PRODUTO;
+/*
+//*
+//*-------------------------------------------------------------------
+//* STEP030 - SELECIONA SOMENTE CONTRATOS ATIVOS (POS 50 = 'A') COM
+//*           SALDO DEVEDOR POSITIVO (POS 22, PACKED) E ORDENA POR
+//*           PRODUTO + CONTRATO
+//*-------------------------------------------------------------------
+//STEP030  EXEC PGM=SORT,COND=(4,LT)
+//SYSOUT   DD SYSOUT=*
+//SORTIN   DD DSN=BCO.JUR.UNLD.CONTRATO(+1),DISP=SHR
+//SORTOUT  DD DSN=BCO.JUR.CONTRATO.ATIVOS(+1),
+//            DISP=(NEW,CATLG,DELETE),
+//            UNIT=SYSDA,SPACE=(CYL,(100,20),RLSE),
+//            DCB=(RECFM=FB,LRECL=50,BLKSIZE=0)
+//SYSIN    DD *
+  INCLUDE COND=(50,1,CH,EQ,C'A',AND,22,8,PD,GT,+0)
+  SORT FIELDS=(17,3,CH,A,1,12,CH,A)
+/*
+//*
+//*-------------------------------------------------------------------
+//* STEP040 - CALCULO DOS ENCARGOS POR CONTRATO
+//*           JURB0100 LE OS CONTRATOS E CHAMA A SUB-ROTINA JURS0100
+//*           RC=00 OK | RC=04 HOUVE REJEITADOS | RC=16 ERRO GRAVE
+//*-------------------------------------------------------------------
+//STEP040  EXEC PGM=JURB0100,PARM='2026-11-24',COND=(4,LT)
+//STEPLIB  DD DSN=BCO.PROD.LOADLIB,DISP=SHR
+//CONTRATO DD DSN=BCO.JUR.CONTRATO.ATIVOS(+1),DISP=SHR
+//TAXAPROD DD DSN=BCO.JUR.UNLD.TAXAPROD(+1),DISP=SHR
+//JUROSOUT DD DSN=BCO.JUR.APROP.JUROS(+1),
+//            DISP=(NEW,CATLG,DELETE),
+//            UNIT=SYSDA,SPACE=(CYL,(150,30),RLSE),
+//            DCB=(RECFM=FB,LRECL=100,BLKSIZE=0)
+//REJEITOS DD DSN=BCO.JUR.APROP.REJEITOS(+1),
+//            DISP=(NEW,CATLG,DELETE),
+//            UNIT=SYSDA,SPACE=(CYL,(5,5),RLSE),
+//            DCB=(RECFM=FB,LRECL=80,BLKSIZE=0)
+//SYSOUT   DD SYSOUT=*
+//SYSUDUMP DD SYSOUT=*
+//CEEDUMP  DD SYSOUT=*
+//*
+//*-------------------------------------------------------------------
+//* STEP050 - RESUMO GERENCIAL POR AGENCIA/PRODUTO
+//*           INREC : MONTA REGISTRO REDUZIDO + CONTADOR (=1)
+//*           SUM   : TOTALIZA VALORES E QUANTIDADE POR CHAVE
+//*           OUTFIL: FORMATA RELATORIO COM CABECALHO E TOTAL GERAL
+//*-------------------------------------------------------------------
+//STEP050  EXEC PGM=SORT,COND=(4,LT)
+//SYSOUT   DD SYSOUT=*
+//SORTIN   DD DSN=BCO.JUR.APROP.JUROS(+1),DISP=SHR
+//SORTOUT  DD DSN=BCO.JUR.RESUMO.AGPROD(+1),
+//            DISP=(NEW,CATLG,DELETE),
+//            UNIT=SYSDA,SPACE=(TRK,(15,15),RLSE),
+//            DCB=(RECFM=FB,LRECL=132,BLKSIZE=0)
+//SYSIN    DD *
+  INREC BUILD=(13,4,                 AGENCIA          -> 01-04
+               17,3,                 PRODUTO          -> 05-07
+               22,8,                 SALDO DEVEDOR    -> 08-15
+               40,8,                 JUROS REMUNER.   -> 16-23
+               48,8,                 JUROS DE MORA    -> 24-31
+               56,8,                 MULTA            -> 32-39
+               64,8,                 TOTAL ENCARGOS   -> 40-47
+               C'000000001')         CONTADOR         -> 48-56
+  SORT FIELDS=(1,4,CH,A,5,3,CH,A)
+  SUM FIELDS=(8,8,PD,16,8,PD,24,8,PD,32,8,PD,40,8,PD,48,9,ZD)
+  OUTFIL REMOVECC,
+    HEADER1=(1:C'BANCO EXEMPLO S.A.',
+             35:C'RESUMO DA APROPRIACAO DE JUROS POR AGENCIA/PRODUTO',
+             105:C'PROCESSADO EM: ',DATE=(DM4/),/,
+             1:132C'-',/,
+             1:C'AGEN',7:C'PRD',14:C'QTD CONTR',
+             32:C'SALDO DEVEDOR',53:C'JUROS REMUNER.',
+             76:C'JUROS DE MORA',106:C'MULTA',
+             118:C'TOTAL ENCARGOS',/,
+             1:132C'-'),
+    BUILD=(1:1,4,
+           7:5,3,
+           12:48,9,ZD,EDIT=(III.III.IIT),
+           25:8,8,PD,EDIT=(I.III.III.III.IIT,TT),
+           47:16,8,PD,EDIT=(I.III.III.III.IIT,TT),
+           69:24,8,PD,EDIT=(I.III.III.III.IIT,TT),
+           91:32,8,PD,EDIT=(I.III.III.III.IIT,TT),
+           113:40,8,PD,EDIT=(I.III.III.III.IIT,TT)),
+    TRAILER1=(1:132C'-',/,
+              1:C'TOTAL',
+              12:TOT=(48,9,ZD,EDIT=(III.III.IIT)),
+              25:TOT=(8,8,PD,EDIT=(I.III.III.III.IIT,TT)),
+              47:TOT=(16,8,PD,EDIT=(I.III.III.III.IIT,TT)),
+              69:TOT=(24,8,PD,EDIT=(I.III.III.III.IIT,TT)),
+              91:TOT=(32,8,PD,EDIT=(I.III.III.III.IIT,TT)),
+              113:TOT=(40,8,PD,EDIT=(I.III.III.III.IIT,TT)))
+/*
+//

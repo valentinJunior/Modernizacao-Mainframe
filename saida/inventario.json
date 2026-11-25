@@ -1,0 +1,1983 @@
+{
+  "metadados": {
+    "gerado_em": "2026-11-25 09:16:31",
+    "versao": "1.0",
+    "pasta_fontes": "legado",
+    "modelo_ia": "qwen2.5:7b",
+    "ia_utilizada": true
+  },
+  "resumo": {
+    "jobs": 1,
+    "steps": 5,
+    "programas": 2,
+    "copybooks": 5,
+    "datasets": 6,
+    "achados": 6,
+    "achados_por_severidade": {
+      "alta": 4,
+      "media": 2,
+      "baixa": 0,
+      "info": 0
+    }
+  },
+  "jobs": [
+    {
+      "nome": "JURD0100",
+      "arquivo": "legado/jcl/JURD0100.jcl",
+      "contabil": "(BCO,JUR,0001)",
+      "descricao": "APROP JUROS DIARIA",
+      "parametros": {
+        "CLASS": "A",
+        "MSGCLASS": "X",
+        "MSGLEVEL": "(1,1)",
+        "NOTIFY": "&SYSUID",
+        "REGION": "0M"
+      },
+      "cabecalho": {
+        "sistema": "JUR - APROPRIACAO DE JUROS DE CONTRATOS DE CREDITO",
+        "job": "JURD0100",
+        "objetivo": "APURAR DIARIAMENTE OS JUROS REMUNERATORIOS, JUROS DE MORA E MULTA DOS CONTRATOS DE CREDITO ATIVOS E GERAR O RESUMO POR AGENCIA/PRODUTO PARA A CONTABILIDADE.",
+        "periodic": "DIARIA - APOS O FECHAMENTO DO MOVIMENTO (CONTROL-M)",
+        "predec": "JURD0090 (ATUALIZACAO DE SALDOS DO DIA)",
+        "sucessor": "CTBD0300 (LANCAMENTOS CONTABEIS DE RENDAS DE CREDITO)",
+        "restart": "TODOS OS ARQUIVOS SAO GDG (+1). EM CASO DE ABEND, DELETAR AS GERACOES CRIADAS NA EXECUCAO E REINICIAR DESDE O STEP010.",
+        "atencao": "A DATA DE REFERENCIA ('2026-11-24') E INFORMADA NO STEP020 (VIGENCIA DA TAXA) E NO STEP040 (PARM). EM PRODUCAO E SUBSTITUIDA PELO CONTROL-M (%%ODATE)."
+      },
+      "steps": [
+        {
+          "nome": "STEP010",
+          "pgm": "IKJEFT01",
+          "proc": null,
+          "parm": null,
+          "cond": null,
+          "descricao": "UNLOAD DB2 DOS CONTRATOS DE CREDITO (DSNTIAUL)",
+          "comentarios": [
+            "SISTEMA  : JUR - APROPRIACAO DE JUROS DE CONTRATOS DE CREDITO",
+            "JOB      : JURD0100",
+            "OBJETIVO : APURAR DIARIAMENTE OS JUROS REMUNERATORIOS, JUROS DE",
+            "MORA E MULTA DOS CONTRATOS DE CREDITO ATIVOS E GERAR",
+            "O RESUMO POR AGENCIA/PRODUTO PARA A CONTABILIDADE.",
+            "PERIODIC.: DIARIA - APOS O FECHAMENTO DO MOVIMENTO (CONTROL-M)",
+            "PREDEC.  : JURD0090 (ATUALIZACAO DE SALDOS DO DIA)",
+            "SUCESSOR : CTBD0300 (LANCAMENTOS CONTABEIS DE RENDAS DE CREDITO)",
+            "STEP010 - UNLOAD DB2 DOS CONTRATOS DE CREDITO       (DSNTIAUL)",
+            "STEP020 - UNLOAD DB2 DAS TAXAS VIGENTES POR PRODUTO (DSNTIAUL)",
+            "STEP030 - SORT: FILTRA ATIVOS E ORDENA POR PRODUTO  (DFSORT)",
+            "STEP040 - CALCULO DOS JUROS - JURB0100 + JURS0100   (COBOL)",
+            "STEP050 - SORT: RESUMO POR AGENCIA/PRODUTO          (DFSORT)",
+            "RESTART  : TODOS OS ARQUIVOS SAO GDG (+1). EM CASO DE ABEND,",
+            "DELETAR AS GERACOES CRIADAS NA EXECUCAO E REINICIAR",
+            "DESDE O STEP010.",
+            "ATENCAO  : A DATA DE REFERENCIA ('2026-11-24') E INFORMADA NO",
+            "STEP020 (VIGENCIA DA TAXA) E NO STEP040 (PARM). EM",
+            "PRODUCAO E SUBSTITUIDA PELO CONTROL-M (%%ODATE).",
+            "STEP010 - UNLOAD DOS CONTRATOS DE CREDITO (TB_CONTRATO_CREDITO)",
+            "SAIDA: LAYOUT JURCCONT - LRECL 50"
+          ],
+          "programa": null,
+          "dds": [
+            {
+              "ddname": "STEPLIB",
+              "linha": 33,
+              "dsn": "DSN.DB2P.SDSNLOAD",
+              "disp": [
+                "SHR"
+              ]
+            },
+            {
+              "ddname": "SYSTSPRT",
+              "linha": 34,
+              "sysout": "*"
+            },
+            {
+              "ddname": "SYSPRINT",
+              "linha": 35,
+              "sysout": "*"
+            },
+            {
+              "ddname": "SYSUDUMP",
+              "linha": 36,
+              "sysout": "*"
+            },
+            {
+              "ddname": "SYSPUNCH",
+              "linha": 37,
+              "sysout": "*"
+            },
+            {
+              "ddname": "SYSREC00",
+              "linha": 38,
+              "dsn": "BCO.JUR.UNLD.CONTRATO",
+              "geracao_gdg": "+1",
+              "disp": [
+                "NEW",
+                "CATLG",
+                "DELETE"
+              ]
+            },
+            {
+              "ddname": "SYSTSIN",
+              "linha": 41,
+              "instream": [
+                " DSN SYSTEM(DB2P)",
+                " RUN PROGRAM(DSNTIAUL) PLAN(DSNTIB12) PARMS('SQL') -",
+                "     LIB('DSN.DB2P.RUNLIB.LOAD')",
+                " END"
+              ]
+            },
+            {
+              "ddname": "SYSIN",
+              "linha": 47,
+              "instream": [
+                " SELECT NR_CONTRATO",
+                "       ,CD_AGENCIA",
+                "       ,CD_PRODUTO",
+                "       ,CD_RATING",
+                "       ,VL_SALDO_DEVEDOR",
+                "       ,CHAR(DT_ULT_APURACAO, ISO)",
+                "       ,CHAR(DT_VENCIMENTO, ISO)",
+                "       ,ST_CONTRATO",
+                "   FROM BCO.TB_CONTRATO_CREDITO;"
+              ]
+            }
+          ],
+          "db2": {
+            "subsistema": "DB2P",
+            "plano": "DSNTIB12"
+          },
+          "tipo": "UNLOAD DB2 (DSNTIAUL)",
+          "sql": "SELECT NR_CONTRATO ,CD_AGENCIA ,CD_PRODUTO ,CD_RATING ,VL_SALDO_DEVEDOR ,CHAR(DT_ULT_APURACAO, ISO) ,CHAR(DT_VENCIMENTO, ISO) ,ST_CONTRATO FROM BCO.TB_CONTRATO_CREDITO;",
+          "tabelas_db2": [
+            "BCO.TB_CONTRATO_CREDITO"
+          ]
+        },
+        {
+          "nome": "STEP020",
+          "pgm": "IKJEFT01",
+          "proc": null,
+          "parm": null,
+          "cond": "(4,LT)",
+          "descricao": "UNLOAD DB2 DAS TAXAS VIGENTES POR PRODUTO (DSNTIAUL)",
+          "comentarios": [
+            "STEP020 - UNLOAD DAS TAXAS VIGENTES NA DATA DE REFERENCIA",
+            "SAIDA: LAYOUT JURCTAXA - LRECL 45 - ORDENADO POR PRODUTO"
+          ],
+          "programa": null,
+          "dds": [
+            {
+              "ddname": "STEPLIB",
+              "linha": 64,
+              "dsn": "DSN.DB2P.SDSNLOAD",
+              "disp": [
+                "SHR"
+              ]
+            },
+            {
+              "ddname": "SYSTSPRT",
+              "linha": 65,
+              "sysout": "*"
+            },
+            {
+              "ddname": "SYSPRINT",
+              "linha": 66,
+              "sysout": "*"
+            },
+            {
+              "ddname": "SYSUDUMP",
+              "linha": 67,
+              "sysout": "*"
+            },
+            {
+              "ddname": "SYSPUNCH",
+              "linha": 68,
+              "sysout": "*"
+            },
+            {
+              "ddname": "SYSREC00",
+              "linha": 69,
+              "dsn": "BCO.JUR.UNLD.TAXAPROD",
+              "geracao_gdg": "+1",
+              "disp": [
+                "NEW",
+                "CATLG",
+                "DELETE"
+              ]
+            },
+            {
+              "ddname": "SYSTSIN",
+              "linha": 72,
+              "instream": [
+                " DSN SYSTEM(DB2P)",
+                " RUN PROGRAM(DSNTIAUL) PLAN(DSNTIB12) PARMS('SQL') -",
+                "     LIB('DSN.DB2P.RUNLIB.LOAD')",
+                " END"
+              ]
+            },
+            {
+              "ddname": "SYSIN",
+              "linha": 78,
+              "instream": [
+                " SELECT CD_PRODUTO",
+                "       ,DS_PRODUTO",
+                "       ,PC_TAXA_MENSAL",
+                "       ,PC_MORA_MENSAL",
+                "       ,PC_MULTA",
+                "   FROM BCO.TB_TAXA_PRODUTO",
+                "  WHERE DT_INI_VIGENCIA <= '2026-11-24'",
+                "    AND DT_FIM_VIGENCIA >= '2026-11-24'",
+                "  ORDER BY CD_PRODUTO;"
+              ]
+            }
+          ],
+          "db2": {
+            "subsistema": "DB2P",
+            "plano": "DSNTIB12"
+          },
+          "tipo": "UNLOAD DB2 (DSNTIAUL)",
+          "sql": "SELECT CD_PRODUTO ,DS_PRODUTO ,PC_TAXA_MENSAL ,PC_MORA_MENSAL ,PC_MULTA FROM BCO.TB_TAXA_PRODUTO WHERE DT_INI_VIGENCIA <= '2026-11-24' AND DT_FIM_VIGENCIA >= '2026-11-24' ORDER BY CD_PRODUTO;",
+          "tabelas_db2": [
+            "BCO.TB_TAXA_PRODUTO"
+          ]
+        },
+        {
+          "nome": "STEP030",
+          "pgm": "SORT",
+          "proc": null,
+          "parm": null,
+          "cond": "(4,LT)",
+          "descricao": "SORT: FILTRA ATIVOS E ORDENA POR PRODUTO (DFSORT)",
+          "comentarios": [
+            "STEP030 - SELECIONA SOMENTE CONTRATOS ATIVOS (POS 50 = 'A') COM",
+            "SALDO DEVEDOR POSITIVO (POS 22, PACKED) E ORDENA POR",
+            "PRODUTO + CONTRATO"
+          ],
+          "programa": null,
+          "dds": [
+            {
+              "ddname": "SYSOUT",
+              "linha": 96,
+              "sysout": "*"
+            },
+            {
+              "ddname": "SORTIN",
+              "linha": 97,
+              "dsn": "BCO.JUR.UNLD.CONTRATO",
+              "geracao_gdg": "+1",
+              "disp": [
+                "SHR"
+              ]
+            },
+            {
+              "ddname": "SORTOUT",
+              "linha": 98,
+              "dsn": "BCO.JUR.CONTRATO.ATIVOS",
+              "geracao_gdg": "+1",
+              "disp": [
+                "NEW",
+                "CATLG",
+                "DELETE"
+              ],
+              "lrecl": 50,
+              "recfm": "FB"
+            },
+            {
+              "ddname": "SYSIN",
+              "linha": 102,
+              "instream": [
+                "  INCLUDE COND=(50,1,CH,EQ,C'A',AND,22,8,PD,GT,+0)",
+                "  SORT FIELDS=(17,3,CH,A,1,12,CH,A)"
+              ]
+            }
+          ],
+          "tipo": "SORT",
+          "sort": {
+            "comandos": [
+              {
+                "comando": "INCLUDE",
+                "operandos": "COND=(50,1,CH,EQ,C'A',AND,22,8,PD,GT,+0)"
+              },
+              {
+                "comando": "SORT",
+                "operandos": "FIELDS=(17,3,CH,A,1,12,CH,A)"
+              }
+            ],
+            "filtro": "INCLUDE COND=(50,1,CH,EQ,C'A',AND,22,8,PD,GT,+0)",
+            "chaves": [
+              {
+                "pos": 17,
+                "tamanho": 3,
+                "formato": "CH",
+                "ordem": "ascendente"
+              },
+              {
+                "pos": 1,
+                "tamanho": 12,
+                "formato": "CH",
+                "ordem": "ascendente"
+              }
+            ],
+            "sumarizacao": null,
+            "reformata_registro": false,
+            "gera_relatorio": false
+          }
+        },
+        {
+          "nome": "STEP040",
+          "pgm": "JURB0100",
+          "proc": null,
+          "parm": "2026-11-24",
+          "cond": "(4,LT)",
+          "descricao": "CALCULO DOS JUROS - JURB0100 + JURS0100 (COBOL)",
+          "comentarios": [
+            "STEP040 - CALCULO DOS ENCARGOS POR CONTRATO",
+            "JURB0100 LE OS CONTRATOS E CHAMA A SUB-ROTINA JURS0100",
+            "RC=00 OK | RC=04 HOUVE REJEITADOS | RC=16 ERRO GRAVE"
+          ],
+          "programa": "JURB0100",
+          "dds": [
+            {
+              "ddname": "STEPLIB",
+              "linha": 113,
+              "dsn": "BCO.PROD.LOADLIB",
+              "disp": [
+                "SHR"
+              ]
+            },
+            {
+              "ddname": "CONTRATO",
+              "linha": 114,
+              "dsn": "BCO.JUR.CONTRATO.ATIVOS",
+              "geracao_gdg": "+1",
+              "disp": [
+                "SHR"
+              ]
+            },
+            {
+              "ddname": "TAXAPROD",
+              "linha": 115,
+              "dsn": "BCO.JUR.UNLD.TAXAPROD",
+              "geracao_gdg": "+1",
+              "disp": [
+                "SHR"
+              ]
+            },
+            {
+              "ddname": "JUROSOUT",
+              "linha": 116,
+              "dsn": "BCO.JUR.APROP.JUROS",
+              "geracao_gdg": "+1",
+              "disp": [
+                "NEW",
+                "CATLG",
+                "DELETE"
+              ],
+              "lrecl": 100,
+              "recfm": "FB"
+            },
+            {
+              "ddname": "REJEITOS",
+              "linha": 120,
+              "dsn": "BCO.JUR.APROP.REJEITOS",
+              "geracao_gdg": "+1",
+              "disp": [
+                "NEW",
+                "CATLG",
+                "DELETE"
+              ],
+              "lrecl": 80,
+              "recfm": "FB"
+            },
+            {
+              "ddname": "SYSOUT",
+              "linha": 124,
+              "sysout": "*"
+            },
+            {
+              "ddname": "SYSUDUMP",
+              "linha": 125,
+              "sysout": "*"
+            },
+            {
+              "ddname": "CEEDUMP",
+              "linha": 126,
+              "sysout": "*"
+            }
+          ],
+          "tipo": "Programa aplicativo",
+          "fonte_programa": "legado/cobol/JURB0100.cbl",
+          "mapeamento_arquivos": [
+            {
+              "ddname": "CONTRATO",
+              "arquivo_logico": "ARQ-CONTRATO",
+              "dsn": "BCO.JUR.CONTRATO.ATIVOS",
+              "copybook": "JURCCONT",
+              "modo": [
+                "INPUT"
+              ],
+              "lrecl_jcl": null,
+              "tamanho_copybook": 50
+            },
+            {
+              "ddname": "TAXAPROD",
+              "arquivo_logico": "ARQ-TAXA",
+              "dsn": "BCO.JUR.UNLD.TAXAPROD",
+              "copybook": "JURCTAXA",
+              "modo": [
+                "INPUT"
+              ],
+              "lrecl_jcl": null,
+              "tamanho_copybook": 45
+            },
+            {
+              "ddname": "JUROSOUT",
+              "arquivo_logico": "ARQ-JUROS",
+              "dsn": "BCO.JUR.APROP.JUROS",
+              "copybook": "JURCSAID",
+              "modo": [
+                "OUTPUT"
+              ],
+              "lrecl_jcl": 100,
+              "tamanho_copybook": 100
+            },
+            {
+              "ddname": "REJEITOS",
+              "arquivo_logico": "ARQ-REJEITO",
+              "dsn": "BCO.JUR.APROP.REJEITOS",
+              "copybook": "JURCREJE",
+              "modo": [
+                "OUTPUT"
+              ],
+              "lrecl_jcl": 80,
+              "tamanho_copybook": 80
+            }
+          ]
+        },
+        {
+          "nome": "STEP050",
+          "pgm": "SORT",
+          "proc": null,
+          "parm": null,
+          "cond": "(4,LT)",
+          "descricao": "SORT: RESUMO POR AGENCIA/PRODUTO (DFSORT)",
+          "comentarios": [
+            "STEP050 - RESUMO GERENCIAL POR AGENCIA/PRODUTO",
+            "INREC : MONTA REGISTRO REDUZIDO + CONTADOR (=1)",
+            "SUM   : TOTALIZA VALORES E QUANTIDADE POR CHAVE",
+            "OUTFIL: FORMATA RELATORIO COM CABECALHO E TOTAL GERAL"
+          ],
+          "programa": null,
+          "dds": [
+            {
+              "ddname": "SYSOUT",
+              "linha": 135,
+              "sysout": "*"
+            },
+            {
+              "ddname": "SORTIN",
+              "linha": 136,
+              "dsn": "BCO.JUR.APROP.JUROS",
+              "geracao_gdg": "+1",
+              "disp": [
+                "SHR"
+              ]
+            },
+            {
+              "ddname": "SORTOUT",
+              "linha": 137,
+              "dsn": "BCO.JUR.RESUMO.AGPROD",
+              "geracao_gdg": "+1",
+              "disp": [
+                "NEW",
+                "CATLG",
+                "DELETE"
+              ],
+              "lrecl": 132,
+              "recfm": "FB"
+            },
+            {
+              "ddname": "SYSIN",
+              "linha": 141,
+              "instream": [
+                "  INREC BUILD=(13,4,                 AGENCIA          -> 01-04",
+                "               17,3,                 PRODUTO          -> 05-07",
+                "               22,8,                 SALDO DEVEDOR    -> 08-15",
+                "               40,8,                 JUROS REMUNER.   -> 16-23",
+                "               48,8,                 JUROS DE MORA    -> 24-31",
+                "               56,8,                 MULTA            -> 32-39",
+                "               64,8,                 TOTAL ENCARGOS   -> 40-47",
+                "               C'000000001')         CONTADOR         -> 48-56",
+                "  SORT FIELDS=(1,4,CH,A,5,3,CH,A)",
+                "  SUM FIELDS=(8,8,PD,16,8,PD,24,8,PD,32,8,PD,40,8,PD,48,9,ZD)",
+                "  OUTFIL REMOVECC,",
+                "    HEADER1=(1:C'BANCO EXEMPLO S.A.',",
+                "             35:C'RESUMO DA APROPRIACAO DE JUROS POR AGENCIA/PRODUTO',",
+                "             105:C'PROCESSADO EM: ',DATE=(DM4/),/,",
+                "             1:132C'-',/,",
+                "             1:C'AGEN',7:C'PRD',14:C'QTD CONTR',",
+                "             32:C'SALDO DEVEDOR',53:C'JUROS REMUNER.',",
+                "             76:C'JUROS DE MORA',106:C'MULTA',",
+                "             118:C'TOTAL ENCARGOS',/,",
+                "             1:132C'-'),",
+                "    BUILD=(1:1,4,",
+                "           7:5,3,",
+                "           12:48,9,ZD,EDIT=(III.III.IIT),",
+                "           25:8,8,PD,EDIT=(I.III.III.III.IIT,TT),",
+                "           47:16,8,PD,EDIT=(I.III.III.III.IIT,TT),",
+                "           69:24,8,PD,EDIT=(I.III.III.III.IIT,TT),",
+                "           91:32,8,PD,EDIT=(I.III.III.III.IIT,TT),",
+                "           113:40,8,PD,EDIT=(I.III.III.III.IIT,TT)),",
+                "    TRAILER1=(1:132C'-',/,",
+                "              1:C'TOTAL',",
+                "              12:TOT=(48,9,ZD,EDIT=(III.III.IIT)),",
+                "              25:TOT=(8,8,PD,EDIT=(I.III.III.III.IIT,TT)),",
+                "              47:TOT=(16,8,PD,EDIT=(I.III.III.III.IIT,TT)),",
+                "              69:TOT=(24,8,PD,EDIT=(I.III.III.III.IIT,TT)),",
+                "              91:TOT=(32,8,PD,EDIT=(I.III.III.III.IIT,TT)),",
+                "              113:TOT=(40,8,PD,EDIT=(I.III.III.III.IIT,TT)))"
+              ]
+            }
+          ],
+          "tipo": "SORT",
+          "sort": {
+            "comandos": [
+              {
+                "comando": "INREC",
+                "operandos": "BUILD=(13,4,17,3,22,8,40,8,48,8,56,8,64,8,C'000000001')"
+              },
+              {
+                "comando": "SORT",
+                "operandos": "FIELDS=(1,4,CH,A,5,3,CH,A)"
+              },
+              {
+                "comando": "SUM",
+                "operandos": "FIELDS=(8,8,PD,16,8,PD,24,8,PD,32,8,PD,40,8,PD,48,9,ZD)"
+              },
+              {
+                "comando": "OUTFIL",
+                "operandos": "REMOVECC,HEADER1=(1:C'BANCO EXEMPLO S.A.',35:C'RESUMO DA APROPRIACAO DE JUROS POR AGENCIA/PRODUTO',105:C'PROCESSADO EM: ',DATE=(DM4/),/,1:132C'-',/,1:C'AGEN',7:C'PRD',14:C'QTD CONTR',32:C'SALDO DEVEDOR',53:C'JUROS REMUNER.',76:C'JUROS DE MORA',106:C'MULTA',118:C'TOTAL ENCARGOS',/,1:132C'-'),BUILD=(1:1,4,7:5,3,12:48,9,ZD,EDIT=(III.III.IIT),25:8,8,PD,EDIT=(I.III.III.III.IIT,TT),47:16,8,PD,EDIT=(I.III.III.III.IIT,TT),69:24,8,PD,EDIT=(I.III.III.III.IIT,TT),91:32,8,PD,EDIT=(I.III.III.III.IIT,TT),113:40,8,PD,EDIT=(I.III.III.III.IIT,TT)),TRAILER1=(1:132C'-',/,1:C'TOTAL',12:TOT=(48,9,ZD,EDIT=(III.III.IIT)),25:TOT=(8,8,PD,EDIT=(I.III.III.III.IIT,TT)),47:TOT=(16,8,PD,EDIT=(I.III.III.III.IIT,TT)),69:TOT=(24,8,PD,EDIT=(I.III.III.III.IIT,TT)),91:TOT=(32,8,PD,EDIT=(I.III.III.III.IIT,TT)),113:TOT=(40,8,PD,EDIT=(I.III.III.III.IIT,TT)))"
+              }
+            ],
+            "filtro": null,
+            "chaves": [
+              {
+                "pos": 1,
+                "tamanho": 4,
+                "formato": "CH",
+                "ordem": "ascendente"
+              },
+              {
+                "pos": 5,
+                "tamanho": 3,
+                "formato": "CH",
+                "ordem": "ascendente"
+              }
+            ],
+            "sumarizacao": "FIELDS=(8,8,PD,16,8,PD,24,8,PD,32,8,PD,40,8,PD,48,9,ZD)",
+            "reformata_registro": true,
+            "gera_relatorio": true
+          }
+        }
+      ],
+      "analise_ia": {
+        "resumo_negocio": "Este processo diário calcula e atribui juros, multas e juros de mora aos contratos de crédito ativos, gerando um resumo por agência/produto para a contabilidade.",
+        "funcao_tecnica": "O JCL executa uma sequência de passos que inclui a extração de dados de bancos de dados, processamento de juros e geração de relatórios.",
+        "regras_negocio": [
+          "Os juros são calculados com base nas taxas vigentes na data de referência.",
+          "Apenas contratos ativos com saldo devedor positivo são considerados.",
+          "Os juros remuneratórios, juros de mora e multa são calculados separadamente.",
+          "O resumo final é gerado por agência e produto, totalizando os encargos.",
+          "Em caso de erro, os arquivos gerados devem ser deletados e o processo reiniciado.",
+          "A data de referência é substituída pelo Control-M na produção."
+        ],
+        "riscos": [
+          "A data de referência pode causar problemas se não for atualizada corretamente.",
+          "Erros no processo de extração de dados podem afetar a precisão dos cálculos.",
+          "A rejeição de contratos pode gerar arquivos de rejeição que precisam ser monitorados.",
+          "O processo de geração de relatórios pode falhar se os arquivos de entrada estiverem corrompidos.",
+          "A reinicialização do processo após um erro pode causar inconsistências se não for feita corretamente."
+        ],
+        "modelo": "qwen2.5:7b",
+        "segundos": 53.0
+      }
+    }
+  ],
+  "programas": [
+    {
+      "programa": "JURB0100",
+      "arquivo": "legado/cobol/JURB0100.cbl",
+      "tipo": "batch",
+      "autor": "SISTEMAS CREDITO - BANCO EXEMPLO S",
+      "data_criacao": "1998-03-15",
+      "objetivo": "LER OS CONTRATOS ATIVOS, LOCALIZAR A TAXA VIGENTE DE CADA PRODUTO, ACIONAR A SUB-ROTINA JURS0100 PARA O CALCULO DOS ENCARGOS E GRAVAR O ARQUIVO DE JUROS APROPRIADOS E O ARQUIVO DE REJEITADOS.",
+      "cabecalho": {
+        "sistema": "JUR - APROPRIACAO DE JUROS DE CONTRATOS DE CREDITO",
+        "programa": "JURB0100 (BATCH)",
+        "objetivo": "LER OS CONTRATOS ATIVOS, LOCALIZAR A TAXA VIGENTE DE CADA PRODUTO, ACIONAR A SUB-ROTINA JURS0100 PARA O CALCULO DOS ENCARGOS E GRAVAR O ARQUIVO DE JUROS APROPRIADOS E O ARQUIVO DE REJEITADOS.",
+        "entradas": "CONTRATO - CONTRATOS ATIVOS ORDENADOS (JURCCONT) TAXAPROD - TAXAS VIGENTES POR PRODUTO (JURCTAXA) PARM     - DATA DE REFERENCIA (AAAA-MM-DD)",
+        "saidas": "JUROSOUT - JUROS APROPRIADOS (JURCSAID) REJEITOS - CONTRATOS REJEITADOS (JURCREJE)",
+        "chama": "JURS0100 - SUB-ROTINA DE CALCULO (CALL DINAMICO)",
+        "return_code": "00 - PROCESSAMENTO NORMAL, SEM REJEICOES 04 - PROCESSAMENTO NORMAL, COM CONTRATOS REJEITADOS 16 - ERRO GRAVE - PROCESSAMENTO INTERROMPIDO"
+      },
+      "historico": [
+        {
+          "data": "1998-03-15",
+          "autor": "JCS",
+          "descricao": "VERSAO INICIAL"
+        },
+        {
+          "data": "2003-07-02",
+          "autor": "MAF",
+          "descricao": "INCLUSAO DE JUROS DE MORA E MULTA"
+        },
+        {
+          "data": "2011-10-20",
+          "autor": "RPL",
+          "descricao": "TAXA PASSA A VIR DA TB_TAXA_PRODUTO (DB2)"
+        },
+        {
+          "data": "2019-05-08",
+          "autor": "ACV",
+          "descricao": "CALCULO MOVIDO PARA A SUB-ROTINA JURS0100"
+        }
+      ],
+      "regras_documentadas": [],
+      "codigos_documentados": [
+        {
+          "codigo": "00",
+          "descricao": "PROCESSAMENTO NORMAL, SEM REJEICOES"
+        },
+        {
+          "codigo": "04",
+          "descricao": "PROCESSAMENTO NORMAL, COM CONTRATOS REJEITADOS"
+        },
+        {
+          "codigo": "16",
+          "descricao": "ERRO GRAVE - PROCESSAMENTO INTERROMPIDO"
+        }
+      ],
+      "arquivos": [
+        {
+          "arquivo_logico": "ARQ-CONTRATO",
+          "ddname": "CONTRATO",
+          "organizacao": "SEQUENTIAL",
+          "file_status": "WS-FS-CONTRATO",
+          "copybook": "JURCCONT",
+          "modo_abertura": [
+            "INPUT"
+          ]
+        },
+        {
+          "arquivo_logico": "ARQ-TAXA",
+          "ddname": "TAXAPROD",
+          "organizacao": "SEQUENTIAL",
+          "file_status": "WS-FS-TAXA",
+          "copybook": "JURCTAXA",
+          "modo_abertura": [
+            "INPUT"
+          ]
+        },
+        {
+          "arquivo_logico": "ARQ-JUROS",
+          "ddname": "JUROSOUT",
+          "organizacao": "SEQUENTIAL",
+          "file_status": "WS-FS-JUROS",
+          "copybook": "JURCSAID",
+          "modo_abertura": [
+            "OUTPUT"
+          ]
+        },
+        {
+          "arquivo_logico": "ARQ-REJEITO",
+          "ddname": "REJEITOS",
+          "organizacao": "SEQUENTIAL",
+          "file_status": "WS-FS-REJEITO",
+          "copybook": "JURCREJE",
+          "modo_abertura": [
+            "OUTPUT"
+          ]
+        }
+      ],
+      "copybooks": [
+        {
+          "copybook": "JURCCONT",
+          "secao": "FILE"
+        },
+        {
+          "copybook": "JURCTAXA",
+          "secao": "FILE"
+        },
+        {
+          "copybook": "JURCSAID",
+          "secao": "FILE"
+        },
+        {
+          "copybook": "JURCREJE",
+          "secao": "FILE"
+        },
+        {
+          "copybook": "JURCCALC",
+          "secao": "WORKING-STORAGE"
+        }
+      ],
+      "chamadas": [
+        {
+          "programa": "JURS0100",
+          "dinamico": true,
+          "variavel": "WS-SUBROTINA",
+          "parametros": [
+            "JUR-AREA-CALCULO"
+          ]
+        }
+      ],
+      "chamado_por": [],
+      "executado_em": [
+        "JURD0100.STEP040"
+      ],
+      "parametros_entrada": [
+        "LK-PARM"
+      ],
+      "paragrafos": [
+        "0000-PRINCIPAL",
+        "1000-INICIALIZAR",
+        "1050-VALIDAR-PARM",
+        "1100-CARREGAR-TAXAS",
+        "1110-LER-TAXA",
+        "2000-PROCESSAR-CONTRATO",
+        "2100-LER-CONTRATO",
+        "2200-CALCULAR-JUROS",
+        "2210-GRAVAR-JUROS",
+        "2300-GRAVAR-REJEITO",
+        "9000-FINALIZAR",
+        "9900-ERRO-GRAVE"
+      ],
+      "paragrafos_nao_referenciados": [],
+      "return_codes": [
+        0,
+        4,
+        16
+      ],
+      "tabelas_sql": [],
+      "comandos_cics": [],
+      "tabelas_internas": [
+        {
+          "nome": "WS-TAX-ITEM",
+          "maximo": 500,
+          "variavel": true
+        }
+      ],
+      "termino": [
+        "GOBACK",
+        "STOP RUN"
+      ],
+      "metricas": {
+        "linhas_total": 386,
+        "linhas_codigo": 283,
+        "linhas_comentario": 57,
+        "percentual_comentario": 14.8
+      },
+      "analise_ia": {
+        "resumo_negocio": "O programa JURB0100 lê contratos ativos, localiza as taxas vigentes para cada produto e calcula os juros devido, gravando os juros apropriados e os contratos rejeitados.",
+        "funcao_tecnica": "O programa lê arquivos de contratos e taxas, chama uma sub-rotina para calcular os juros e grava os resultados em arquivos separados.",
+        "regras_negocio": [
+          "O programa processa contratos ativos e calcula juros com base nas taxas vigentes.",
+          "Os juros são calculados e gravados em um arquivo separado, enquanto os contratos rejeitados são registrados em outro arquivo.",
+          "A data de referência para os cálculos é fornecida via parâmetro.",
+          "O programa utiliza uma tabela de taxas em memória para realizar cálculos.",
+          "Os contratos sem taxas vigentes são rejeitados.",
+          "Os juros calculados são atualizados no saldo do contrato."
+        ],
+        "riscos": [
+          "O programa depende de uma tabela de taxas com até 500 produtos, o que pode limitar a versatilidade.",
+          "A leitura de arquivos pode falhar, resultando em erros graves.",
+          "A sub-rotina JURS0100 deve estar disponível na STEPLIB para o programa funcionar.",
+          "A data de referência deve estar no formato correto e existir no calendário.",
+          "O arquivo de contratos deve estar ordenado e sem duplicidades para a busca binária funcionar corretamente.",
+          "O programa não trata erros específicos que podem ocorrer durante o cálculo dos juros."
+        ],
+        "modelo": "qwen2.5:7b",
+        "segundos": 83.8
+      }
+    },
+    {
+      "programa": "JURS0100",
+      "arquivo": "legado/cobol/JURS0100.cbl",
+      "tipo": "subrotina",
+      "autor": "SISTEMAS CREDITO - BANCO EXEMPLO S",
+      "data_criacao": "2019-05-08",
+      "objetivo": "CALCULAR OS ENCARGOS DE UM CONTRATO DE CREDITO NO PERIODO ENTRE A ULTIMA APURACAO E A DATA DE REFERENCIA: - JUROS REMUNERATORIOS (COMPOSTOS, BASE 30 DIAS) - JUROS DE MORA (SIMPLES, PRO RATA DIE) - MULTA POR ATRASO (UNICA VEZ)",
+      "cabecalho": {
+        "sistema": "JUR - APROPRIACAO DE JUROS DE CONTRATOS DE CREDITO",
+        "programa": "JURS0100 (SUB-ROTINA - CHAMADA VIA CALL)",
+        "objetivo": "CALCULAR OS ENCARGOS DE UM CONTRATO DE CREDITO NO PERIODO ENTRE A ULTIMA APURACAO E A DATA DE REFERENCIA: - JUROS REMUNERATORIOS (COMPOSTOS, BASE 30 DIAS) - JUROS DE MORA (SIMPLES, PRO RATA DIE) - MULTA POR ATRASO (UNICA VEZ)",
+        "chamado": "JURB0100 (E QUALQUER PROGRAMA QUE USE A JURCCALC)",
+        "interface": "COPYBOOK JURCCALC"
+      },
+      "historico": [
+        {
+          "data": "2019-05-08",
+          "autor": "ACV",
+          "descricao": "VERSAO INICIAL (EXTRAIDO DO JURB0100)"
+        },
+        {
+          "data": "2021-02-11",
+          "autor": "ACV",
+          "descricao": "INCLUSAO DOS RATINGS F, G E H"
+        },
+        {
+          "data": "2023-09-14",
+          "autor": "LMS",
+          "descricao": "VALIDACAO DE SALDO NAO NUMERICO (S0C7)"
+        }
+      ],
+      "regras_documentadas": [
+        {
+          "id": "RN01",
+          "descricao": "TAXA APLICADA = TAXA BASE DO PRODUTO + SPREAD DO RATING"
+        },
+        {
+          "id": "RN02",
+          "descricao": "JUROS REMUNERATORIOS = SALDO * ((1+TAXA)^(DIAS/30) - 1)"
+        },
+        {
+          "id": "RN03",
+          "descricao": "JUROS DE MORA = SALDO * TAXA MORA * DIAS ATRASO / 30, CONSIDERANDO APENAS OS DIAS DE ATRASO DENTRO DO PERIODO"
+        },
+        {
+          "id": "RN04",
+          "descricao": "MULTA = SALDO * PERCENTUAL DE MULTA, COBRADA SOMENTE NO PERIODO EM QUE O VENCIMENTO OCORREU"
+        },
+        {
+          "id": "RN05",
+          "descricao": "SALDO ATUALIZADO = SALDO + TOTAL DE ENCARGOS"
+        },
+        {
+          "id": "RN01",
+          "descricao": "SPREAD DE RISCO POR RATING (% AO MES) ATENCAO: TABELA FIXA NO PROGRAMA. ALTERACOES EXIGEM MANUTENCAO, COMPILACAO E IMPLANTACAO DA SUB-ROTINA."
+        },
+        {
+          "id": "RN02",
+          "descricao": "JUROS COMPOSTOS COM TAXA MENSAL EQUIVALENTE DIARIA (CONVENCAO MES COMERCIAL DE 30 DIAS)"
+        },
+        {
+          "id": "RN03",
+          "descricao": "MORA SOMENTE SOBRE OS DIAS DE ATRASO CONTIDOS NO PERIODO APURADO (EVITA COBRAR DUAS VEZES)"
+        },
+        {
+          "id": "RN04",
+          "descricao": "MULTA APENAS NO PERIODO EM QUE O VENCIMENTO OCORREU (NAO E COBRADA NOVAMENTE NOS PROXIMOS DIAS)"
+        },
+        {
+          "id": "RN05",
+          "descricao": "CONSOLIDACAO DOS ENCARGOS"
+        }
+      ],
+      "codigos_documentados": [],
+      "arquivos": [],
+      "copybooks": [
+        {
+          "copybook": "JURCCALC",
+          "secao": "LINKAGE"
+        }
+      ],
+      "chamadas": [],
+      "chamado_por": [
+        "JURB0100"
+      ],
+      "executado_em": [],
+      "parametros_entrada": [
+        "JUR-AREA-CALCULO"
+      ],
+      "paragrafos": [
+        "0000-PRINCIPAL",
+        "1000-VALIDAR-ENTRADA",
+        "1100-VALIDAR-DATAS",
+        "1110-CONVERTER-DATA-ISO",
+        "2000-APLICAR-SPREAD-RATING",
+        "3000-CALCULAR-PRAZO",
+        "4000-CALCULAR-JUROS-REMUN",
+        "5000-CALCULAR-ENCARGOS-ATRASO",
+        "6000-TOTALIZAR"
+      ],
+      "paragrafos_nao_referenciados": [],
+      "return_codes": [],
+      "tabelas_sql": [],
+      "comandos_cics": [],
+      "tabelas_internas": [],
+      "termino": [
+        "GOBACK"
+      ],
+      "metricas": {
+        "linhas_total": 266,
+        "linhas_codigo": 184,
+        "linhas_comentario": 57,
+        "percentual_comentario": 21.4
+      },
+      "analise_ia": {
+        "resumo_negocio": "Esta subrotina calcula os encargos financeiros de um contrato de crédito, como juros remuneratórios, juros de mora e multa, entre a última apuração e a data de referência.",
+        "funcao_tecnica": "Esta subrotina realiza cálculos financeiros complexos, incluindo juros compostos e simples, com base em regras de negócio específicas.",
+        "regras_negocio": [
+          "TAXA APLICADA = TAXA BASE DO PRODUTO + SPREAD DO RATING",
+          "JUROS REMUNERATORIOS = SALDO * ((1+TAXA)^(DIAS/30) - 1)",
+          "JUROS DE MORA = SALDO * TAXA MORA * DIAS ATRASO / 30, CONSIDERANDO APENAS OS DIAS DE ATRASO DENTRO DO PERIODO",
+          "MULTA = SALDO * PERCENTUAL DE MULTA, COBRADA SOMENTE NO PERIODO EM QUE O VENCIMENTO OCORREU",
+          "SALDO ATUALIZADO = SALDO + TOTAL DE ENCARGOS",
+          "SPREAD DE RISCO POR RATING (% AO MES) ATENÇÃO: TABELA FIXA NO PROGRAMA. ALTERAÇÕES EXIGEM MANUTENÇÃO, COMPILAÇÃO E IMPLANTAÇÃO DA SUB-ROTINA."
+        ],
+        "riscos": [
+          "A tabela de spread de risco está fixa no programa, o que pode levar a erros se não for atualizada corretamente.",
+          "O cálculo de juros remuneratórios utiliza a convenção de 30 dias por mês, o que pode não refletir a realidade financeira.",
+          "A cobrança de juros de mora e multa é condicionada ao período de atraso, o que pode gerar inconsistências se não for aplicado corretamente.",
+          "A validação de datas é realizada apenas com base em testes de data, o que pode não garantir a integridade das informações.",
+          "O código não trata casos específicos de exceção, como saldo devedor negativo, o que pode levar a erros silenciosos."
+        ],
+        "modelo": "qwen2.5:7b",
+        "segundos": 70.9
+      }
+    }
+  ],
+  "copybooks": [
+    {
+      "nome": "JURCCALC",
+      "arquivo": "legado/copybook/JURCCALC.cpy",
+      "descricao": "AREA DE COMUNICACAO ENTRE O PROGRAMA JURB0100 E A SUB-ROTINA DE CALCULO JURS0100 (CALL ... USING)",
+      "registros": [
+        "JUR-AREA-CALCULO"
+      ],
+      "tamanho_calculado": 167,
+      "lrecl_documentado": null,
+      "quantidade_campos": 20,
+      "campos": [
+        {
+          "nivel": 1,
+          "nome": "JUR-AREA-CALCULO",
+          "pos": 1,
+          "tamanho": 167,
+          "formato": "grupo",
+          "pic": null,
+          "uso": null,
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JUR-ENTRADA",
+          "pos": 1,
+          "tamanho": 64,
+          "formato": "grupo",
+          "pic": null,
+          "uso": null,
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-E-NR-CONTRATO",
+          "pos": 1,
+          "tamanho": 12,
+          "formato": "CH X(12)",
+          "pic": "X(12)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-E-CD-RATING",
+          "pos": 13,
+          "tamanho": 2,
+          "formato": "CH X(02)",
+          "pic": "X(02)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-E-VL-SALDO",
+          "pos": 15,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-E-PC-TAXA-BASE",
+          "pos": 23,
+          "tamanho": 4,
+          "formato": "PD S9(03)V9(04)",
+          "pic": "S9(03)V9(04)",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-E-PC-MORA",
+          "pos": 27,
+          "tamanho": 4,
+          "formato": "PD S9(03)V9(04)",
+          "pic": "S9(03)V9(04)",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-E-PC-MULTA",
+          "pos": 31,
+          "tamanho": 4,
+          "formato": "PD S9(03)V9(04)",
+          "pic": "S9(03)V9(04)",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-E-DT-ULT-APURACAO",
+          "pos": 35,
+          "tamanho": 10,
+          "formato": "CH X(10)",
+          "pic": "X(10)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-E-DT-VENCIMENTO",
+          "pos": 45,
+          "tamanho": 10,
+          "formato": "CH X(10)",
+          "pic": "X(10)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-E-DT-REFERENCIA",
+          "pos": 55,
+          "tamanho": 10,
+          "formato": "CH X(10)",
+          "pic": "X(10)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JUR-SAIDA",
+          "pos": 65,
+          "tamanho": 51,
+          "formato": "grupo",
+          "pic": null,
+          "uso": null,
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-S-PC-TAXA-APLICADA",
+          "pos": 65,
+          "tamanho": 4,
+          "formato": "PD S9(03)V9(04)",
+          "pic": "S9(03)V9(04)",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-S-QT-DIAS",
+          "pos": 69,
+          "tamanho": 3,
+          "formato": "PD S9(05)",
+          "pic": "S9(05)",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-S-QT-DIAS-ATRASO",
+          "pos": 72,
+          "tamanho": 3,
+          "formato": "PD S9(05)",
+          "pic": "S9(05)",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-S-FL-ATRASO",
+          "pos": 75,
+          "tamanho": 1,
+          "formato": "CH X(01)",
+          "pic": "X(01)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": [
+            {
+              "nome": "JUR-S-EM-ATRASO",
+              "valor": "'S'"
+            },
+            {
+              "nome": "JUR-S-EM-DIA",
+              "valor": "'N'"
+            }
+          ]
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-S-VL-JUROS-REMUN",
+          "pos": 76,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-S-VL-JUROS-MORA",
+          "pos": 84,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-S-VL-MULTA",
+          "pos": 92,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-S-VL-TOTAL-ENCARGOS",
+          "pos": 100,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-S-VL-SALDO-ATUALIZ",
+          "pos": 108,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JUR-RETORNO",
+          "pos": 116,
+          "tamanho": 52,
+          "formato": "grupo",
+          "pic": null,
+          "uso": null,
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-CD-RETORNO",
+          "pos": 116,
+          "tamanho": 2,
+          "formato": "CH X(02)",
+          "pic": "X(02)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": [
+            {
+              "nome": "JUR-RET-OK",
+              "valor": "'00'"
+            }
+          ]
+        },
+        {
+          "nivel": 10,
+          "nome": "JUR-DS-RETORNO",
+          "pos": 118,
+          "tamanho": 50,
+          "formato": "CH X(50)",
+          "pic": "X(50)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        }
+      ],
+      "codigos_documentados": [
+        {
+          "codigo": "00",
+          "descricao": "CALCULO EFETUADO COM SUCESSO"
+        },
+        {
+          "codigo": "10",
+          "descricao": "TAXA BASE FORA DA FAIXA PERMITIDA"
+        },
+        {
+          "codigo": "20",
+          "descricao": "SALDO DEVEDOR ZERADO OU NEGATIVO"
+        },
+        {
+          "codigo": "21",
+          "descricao": "SALDO DEVEDOR COM CONTEUDO NAO NUMERICO"
+        },
+        {
+          "codigo": "30",
+          "descricao": "DATA DA ULTIMA APURACAO INVALIDA"
+        },
+        {
+          "codigo": "31",
+          "descricao": "DATA DE VENCIMENTO INVALIDA"
+        },
+        {
+          "codigo": "32",
+          "descricao": "DATA DE REFERENCIA ANTERIOR A ULTIMA APURACAO"
+        },
+        {
+          "codigo": "33",
+          "descricao": "DATA DE REFERENCIA INVALIDA"
+        },
+        {
+          "codigo": "40",
+          "descricao": "RATING DE RISCO NAO RECONHECIDO"
+        }
+      ],
+      "usado_por": [
+        "JURB0100",
+        "JURS0100"
+      ]
+    },
+    {
+      "nome": "JURCCONT",
+      "arquivo": "legado/copybook/JURCCONT.cpy",
+      "descricao": "LAYOUT DO ARQUIVO DE CONTRATOS ORIGEM: UNLOAD DA TABELA DB2 BCO.TB_CONTRATO_CREDITO",
+      "registros": [
+        "REG-CONTRATO"
+      ],
+      "tamanho_calculado": 50,
+      "lrecl_documentado": 50,
+      "quantidade_campos": 8,
+      "campos": [
+        {
+          "nivel": 1,
+          "nome": "REG-CONTRATO",
+          "pos": 1,
+          "tamanho": 50,
+          "formato": "grupo",
+          "pic": null,
+          "uso": null,
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "CTR-NR-CONTRATO",
+          "pos": 1,
+          "tamanho": 12,
+          "formato": "CH X(12)",
+          "pic": "X(12)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "CTR-CD-AGENCIA",
+          "pos": 13,
+          "tamanho": 4,
+          "formato": "CH X(04)",
+          "pic": "X(04)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "CTR-CD-PRODUTO",
+          "pos": 17,
+          "tamanho": 3,
+          "formato": "CH X(03)",
+          "pic": "X(03)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "CTR-CD-RATING",
+          "pos": 20,
+          "tamanho": 2,
+          "formato": "CH X(02)",
+          "pic": "X(02)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "CTR-VL-SALDO-DEVEDOR",
+          "pos": 22,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "CTR-DT-ULT-APURACAO",
+          "pos": 30,
+          "tamanho": 10,
+          "formato": "CH X(10)",
+          "pic": "X(10)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "CTR-DT-VENCIMENTO",
+          "pos": 40,
+          "tamanho": 10,
+          "formato": "CH X(10)",
+          "pic": "X(10)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "CTR-ST-CONTRATO",
+          "pos": 50,
+          "tamanho": 1,
+          "formato": "CH X(01)",
+          "pic": "X(01)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": [
+            {
+              "nome": "CTR-ATIVO",
+              "valor": "'A'"
+            }
+          ]
+        }
+      ],
+      "codigos_documentados": [],
+      "usado_por": [
+        "JURB0100"
+      ]
+    },
+    {
+      "nome": "JURCREJE",
+      "arquivo": "legado/copybook/JURCREJE.cpy",
+      "descricao": "LAYOUT DO ARQUIVO DE CONTRATOS REJEITADOS (TRATADO PELA AREA DE OPERACOES NO D+1)",
+      "registros": [
+        "REG-REJEITO"
+      ],
+      "tamanho_calculado": 80,
+      "lrecl_documentado": 80,
+      "quantidade_campos": 6,
+      "campos": [
+        {
+          "nivel": 1,
+          "nome": "REG-REJEITO",
+          "pos": 1,
+          "tamanho": 80,
+          "formato": "grupo",
+          "pic": null,
+          "uso": null,
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "REJ-NR-CONTRATO",
+          "pos": 1,
+          "tamanho": 12,
+          "formato": "CH X(12)",
+          "pic": "X(12)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "REJ-CD-AGENCIA",
+          "pos": 13,
+          "tamanho": 4,
+          "formato": "CH X(04)",
+          "pic": "X(04)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "REJ-CD-PRODUTO",
+          "pos": 17,
+          "tamanho": 3,
+          "formato": "CH X(03)",
+          "pic": "X(03)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "REJ-CD-MOTIVO",
+          "pos": 20,
+          "tamanho": 2,
+          "formato": "CH X(02)",
+          "pic": "X(02)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "REJ-DS-MOTIVO",
+          "pos": 22,
+          "tamanho": 50,
+          "formato": "CH X(50)",
+          "pic": "X(50)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "FILLER",
+          "pos": 72,
+          "tamanho": 9,
+          "formato": "CH X(09)",
+          "pic": "X(09)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        }
+      ],
+      "codigos_documentados": [
+        {
+          "codigo": "01",
+          "descricao": "PRODUTO SEM TAXA VIGENTE (GERADO PELO JURB0100)"
+        },
+        {
+          "codigo": "10 A 40",
+          "descricao": "ERROS DE CALCULO DEVOLVIDOS PELA SUB-ROTINA JURS0100"
+        }
+      ],
+      "usado_por": [
+        "JURB0100"
+      ]
+    },
+    {
+      "nome": "JURCSAID",
+      "arquivo": "legado/copybook/JURCSAID.cpy",
+      "descricao": "LAYOUT DO ARQUIVO DE JUROS APROPRIADOS (SAIDA) CONSUMIDO PELA CONTABILIDADE E PELO STEP DE RESUMO",
+      "registros": [
+        "REG-JUROS"
+      ],
+      "tamanho_calculado": 100,
+      "lrecl_documentado": 100,
+      "quantidade_campos": 15,
+      "campos": [
+        {
+          "nivel": 1,
+          "nome": "REG-JUROS",
+          "pos": 1,
+          "tamanho": 100,
+          "formato": "grupo",
+          "pic": null,
+          "uso": null,
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-NR-CONTRATO",
+          "pos": 1,
+          "tamanho": 12,
+          "formato": "CH X(12)",
+          "pic": "X(12)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-CD-AGENCIA",
+          "pos": 13,
+          "tamanho": 4,
+          "formato": "CH X(04)",
+          "pic": "X(04)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-CD-PRODUTO",
+          "pos": 17,
+          "tamanho": 3,
+          "formato": "CH X(03)",
+          "pic": "X(03)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-CD-RATING",
+          "pos": 20,
+          "tamanho": 2,
+          "formato": "CH X(02)",
+          "pic": "X(02)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-VL-SALDO-ANTERIOR",
+          "pos": 22,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-PC-TAXA-APLICADA",
+          "pos": 30,
+          "tamanho": 4,
+          "formato": "PD S9(03)V9(04)",
+          "pic": "S9(03)V9(04)",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-QT-DIAS",
+          "pos": 34,
+          "tamanho": 5,
+          "formato": "ZD 9(05)",
+          "pic": "9(05)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-FL-ATRASO",
+          "pos": 39,
+          "tamanho": 1,
+          "formato": "CH X(01)",
+          "pic": "X(01)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-VL-JUROS-REMUN",
+          "pos": 40,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-VL-JUROS-MORA",
+          "pos": 48,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-VL-MULTA",
+          "pos": 56,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-VL-TOTAL-ENCARGOS",
+          "pos": 64,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-VL-SALDO-ATUALIZ",
+          "pos": 72,
+          "tamanho": 8,
+          "formato": "PD S9(13)V99",
+          "pic": "S9(13)V99",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "JRS-DT-REFERENCIA",
+          "pos": 80,
+          "tamanho": 10,
+          "formato": "CH X(10)",
+          "pic": "X(10)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "FILLER",
+          "pos": 90,
+          "tamanho": 11,
+          "formato": "CH X(11)",
+          "pic": "X(11)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        }
+      ],
+      "codigos_documentados": [],
+      "usado_por": [
+        "JURB0100"
+      ]
+    },
+    {
+      "nome": "JURCTAXA",
+      "arquivo": "legado/copybook/JURCTAXA.cpy",
+      "descricao": "LAYOUT DO ARQUIVO DE TAXAS VIGENTES POR PRODUTO ORIGEM: UNLOAD DA TABELA DB2 BCO.TB_TAXA_PRODUTO (ORDENADO POR CD_PRODUTO - EXIGIDO PELO SEARCH ALL)",
+      "registros": [
+        "REG-TAXA"
+      ],
+      "tamanho_calculado": 45,
+      "lrecl_documentado": 45,
+      "quantidade_campos": 5,
+      "campos": [
+        {
+          "nivel": 1,
+          "nome": "REG-TAXA",
+          "pos": 1,
+          "tamanho": 45,
+          "formato": "grupo",
+          "pic": null,
+          "uso": null,
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "TAX-CD-PRODUTO",
+          "pos": 1,
+          "tamanho": 3,
+          "formato": "CH X(03)",
+          "pic": "X(03)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "TAX-DS-PRODUTO",
+          "pos": 4,
+          "tamanho": 30,
+          "formato": "CH X(30)",
+          "pic": "X(30)",
+          "uso": "DISPLAY",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "TAX-PC-TAXA-MENSAL",
+          "pos": 34,
+          "tamanho": 4,
+          "formato": "PD S9(03)V9(04)",
+          "pic": "S9(03)V9(04)",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "TAX-PC-MORA-MENSAL",
+          "pos": 38,
+          "tamanho": 4,
+          "formato": "PD S9(03)V9(04)",
+          "pic": "S9(03)V9(04)",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        },
+        {
+          "nivel": 5,
+          "nome": "TAX-PC-MULTA",
+          "pos": 42,
+          "tamanho": 4,
+          "formato": "PD S9(03)V9(04)",
+          "pic": "S9(03)V9(04)",
+          "uso": "COMP-3",
+          "occurs": null,
+          "redefines": null,
+          "condicoes": []
+        }
+      ],
+      "codigos_documentados": [],
+      "usado_por": [
+        "JURB0100"
+      ]
+    }
+  ],
+  "datasets": [
+    {
+      "dsn": "BCO.JUR.APROP.JUROS",
+      "gdg": true,
+      "lrecl": 100,
+      "recfm": "FB",
+      "layout": "JURCSAID",
+      "criado_por": [
+        {
+          "step": "JURD0100.STEP040",
+          "ddname": "JUROSOUT",
+          "disp": "NEW"
+        }
+      ],
+      "lido_por": [
+        {
+          "step": "JURD0100.STEP050",
+          "ddname": "SORTIN",
+          "disp": "SHR"
+        }
+      ]
+    },
+    {
+      "dsn": "BCO.JUR.APROP.REJEITOS",
+      "gdg": true,
+      "lrecl": 80,
+      "recfm": "FB",
+      "layout": "JURCREJE",
+      "criado_por": [
+        {
+          "step": "JURD0100.STEP040",
+          "ddname": "REJEITOS",
+          "disp": "NEW"
+        }
+      ],
+      "lido_por": []
+    },
+    {
+      "dsn": "BCO.JUR.CONTRATO.ATIVOS",
+      "gdg": true,
+      "lrecl": 50,
+      "recfm": "FB",
+      "layout": "JURCCONT",
+      "criado_por": [
+        {
+          "step": "JURD0100.STEP030",
+          "ddname": "SORTOUT",
+          "disp": "NEW"
+        }
+      ],
+      "lido_por": [
+        {
+          "step": "JURD0100.STEP040",
+          "ddname": "CONTRATO",
+          "disp": "SHR"
+        }
+      ]
+    },
+    {
+      "dsn": "BCO.JUR.RESUMO.AGPROD",
+      "gdg": true,
+      "lrecl": 132,
+      "recfm": "FB",
+      "layout": null,
+      "criado_por": [
+        {
+          "step": "JURD0100.STEP050",
+          "ddname": "SORTOUT",
+          "disp": "NEW"
+        }
+      ],
+      "lido_por": []
+    },
+    {
+      "dsn": "BCO.JUR.UNLD.CONTRATO",
+      "gdg": true,
+      "lrecl": null,
+      "recfm": null,
+      "layout": "JURCCONT",
+      "criado_por": [
+        {
+          "step": "JURD0100.STEP010",
+          "ddname": "SYSREC00",
+          "disp": "NEW"
+        }
+      ],
+      "lido_por": [
+        {
+          "step": "JURD0100.STEP030",
+          "ddname": "SORTIN",
+          "disp": "SHR"
+        }
+      ]
+    },
+    {
+      "dsn": "BCO.JUR.UNLD.TAXAPROD",
+      "gdg": true,
+      "lrecl": null,
+      "recfm": null,
+      "layout": "JURCTAXA",
+      "criado_por": [
+        {
+          "step": "JURD0100.STEP020",
+          "ddname": "SYSREC00",
+          "disp": "NEW"
+        }
+      ],
+      "lido_por": [
+        {
+          "step": "JURD0100.STEP040",
+          "ddname": "TAXAPROD",
+          "disp": "SHR"
+        }
+      ]
+    }
+  ],
+  "achados": [
+    {
+      "severidade": "alta",
+      "componente": "JURD0100",
+      "descricao": "A mesma data (2026-11-24) esta digitada em 2 lugares: STEP020 (DD SYSIN), STEP040 (PARM). Um reprocessamento pode acabar usando datas diferentes entre os steps."
+    },
+    {
+      "severidade": "alta",
+      "componente": "JURD0100.STEP020",
+      "descricao": "Data fixa no instream da DD SYSIN: 2026-11-24."
+    },
+    {
+      "severidade": "alta",
+      "componente": "JURD0100.STEP040",
+      "descricao": "Data fixa no PARM ('2026-11-24'). Deveria vir do agendador (ex.: %%ODATE no Control-M)."
+    },
+    {
+      "severidade": "alta",
+      "componente": "JURS0100",
+      "descricao": "Tabela de valores fixa no codigo (9 WHEN com valores literais). Alterar exige manutencao e nova implantacao."
+    },
+    {
+      "severidade": "media",
+      "componente": "JURB0100",
+      "descricao": "Tabela interna WS-TAX-ITEM limitada a 500 ocorrencias; o crescimento do volume pode interromper o processamento."
+    },
+    {
+      "severidade": "media",
+      "componente": "JURS0100",
+      "descricao": "Usa exponenciacao (**). Validar precisao e arredondamento em qualquer migracao de plataforma."
+    }
+  ]
+}

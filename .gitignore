@@ -1,0 +1,17 @@
+# Build Java
+target/
+servico-juros/target/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Editores e SO
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Configuração local do Claude Code
+.claude/settings.local.json
