@@ -3,23 +3,26 @@
 **Projeto:** Capstone de Modernização Mainframe com Agentes de IA
 **Autor:** Jair Valentin, analista mainframe
 **Data:** 24/11/2026
-**Para:** Claude (agente de IA de apoio ao desenvolvimento)
 **Fase:** 3 de 3 (1 = inventário, 2 = documentação, 3 = conversão)
+**Destinatários:** agente de IA de desenvolvimento (Claude) e equipe técnica
+**Status:** implementada em `servico-juros/`; equivalência verificada contra o COBOL original em `equivalencia-cobol/`
+
+> **Como esta especificação foi usada.** O projeto segue desenvolvimento guiado por especificação: o analista define as regras, as fontes de verdade e os critérios de aceite; um agente de IA implementa a partir deste documento; o analista revisa, decide as divergências e valida o resultado contra os critérios da seção 12.
 
 ---
 
 ## 1. Contexto
 
-Claude, nas fases anteriores nós:
+As fases anteriores produziram:
 
-1. geramos o inventário automático do sistema de juros (`inventario_mainframe.py` → `saida/inventario.json`);
-2. produzimos a **Documentação Técnica — Apropriação Diária de Juros (JURD0100)**, com as regras RN01 a RN05, os códigos de rejeição, o exemplo numérico e os riscos.
+1. o inventário automático do sistema de juros (`inventario_mainframe.py` → `saida/inventario.json`);
+2. a **Documentação Técnica — Apropriação Diária de Juros (JURD0100)**, com as regras RN01 a RN05, os códigos de rejeição, o exemplo numérico e os riscos.
 
-Agora quero fechar o ciclo da apresentação: **transformar o que foi documentado num microserviço Java**, provando que a documentação gerada com IA serve de base confiável para a modernização.
+Esta fase fecha o ciclo: **transformar o que foi documentado num microserviço Java**, demonstrando que a documentação produzida com apoio de IA é uma base confiável para a modernização.
 
 ## 2. Fontes de verdade (e a ordem de prioridade)
 
-Use as três fontes abaixo, nesta ordem:
+A implementação deve usar as três fontes abaixo, nesta ordem:
 
 | Prioridade | Fonte | Para quê |
 | --- | --- | --- |
@@ -27,7 +30,7 @@ Use as três fontes abaixo, nesta ordem:
 | 2 | Documentação Técnica JURD0100 | Regras de negócio, códigos de rejeição, exemplo numérico, riscos |
 | 3 | `saida/inventario.json` | Interfaces, layouts, campos e tamanhos, ligações entre componentes |
 
-**Regra de ouro:** se a documentação e o COBOL divergirem, **vale o COBOL**. Registre a divergência em `DIVERGENCIAS.md` e me avise; não corrija regra de negócio por conta própria, mesmo que pareça errada. Em banco, mudar regra é decisão de negócio, não de desenvolvimento.
+**Regra de ouro:** se a documentação e o COBOL divergirem, **vale o COBOL**. A divergência deve ser registrada em `DIVERGENCIAS.md` e comunicada ao analista responsável. Nenhuma regra de negócio deve ser corrigida por iniciativa própria, mesmo que pareça errada. Em banco, mudar regra é decisão de negócio, não de desenvolvimento.
 
 ## 3. Objetivo
 
@@ -225,12 +228,12 @@ Casos obrigatórios desde já (calculados a partir da documentação):
 | Exemplo da documentação | saldo 100.000,00, taxa 1,80, rating B, 30 dias, 10 de atraso, mora 1%, multa 2% | remun. 2.050,00; mora 333,33; multa 2.000,00; total 4.383,33 |
 | Rotina diária em dia | saldo 100.000,00, taxa 1,80, rating B, 1 dia, sem atraso | remun. 67,67; total 67,67 |
 
-Quando eu tiver a massa extraída da execução real do JURB0100 no mainframe (arquivo JUROSOUT convertido para CSV), ela entra neste mesmo arquivo, sem mudar código.
+Quando a massa extraída da execução real do JURB0100 no mainframe estiver disponível (arquivo JUROSOUT convertido para CSV), ela será acrescentada a este mesmo arquivo, sem mudança de código.
 
 ### 9.3 Testes de API
 Chamada real dos endpoints com o exemplo da seção 7.1, um contrato rejeitado e um lote misto (válidos e inválidos).
 
-## 10. O que eu não quero
+## 10. Restrições explícitas (não fazer)
 
 - Valor monetário em `double`.
 - Mudança de regra sem registro em `DIVERGENCIAS.md`.
@@ -257,7 +260,7 @@ Chamada real dos endpoints com o exemplo da seção 7.1, um contrato rejeitado e
 8. A imagem Docker sobe e responde em `/actuator/health`.
 9. `README.md` explica como rodar e mostra um `curl` com o exemplo; `DECISOES.md` registra as decisões técnicas (precisão, potência, códigos HTTP); `DIVERGENCIAS.md` existe, mesmo que vazio.
 
-## 13. Plano de adoção (para a apresentação)
+## 13. Plano de adoção
 
 | Fase | O que acontece | Critério para avançar |
 | --- | --- | --- |

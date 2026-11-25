@@ -3,13 +3,17 @@
 **Projeto:** Capstone de Modernização Mainframe com Agentes de IA
 **Autor:** Jair Valentin, analista mainframe
 **Data:** 24/11/2026
-**Para:** Claude (agente de IA de apoio ao desenvolvimento)
+**Fase:** 1 de 3 (1 = inventário, 2 = documentação, 3 = conversão)
+**Destinatários:** agente de IA de desenvolvimento (Claude) e equipe técnica
+**Status:** implementada em `inventario_mainframe.py`
+
+> **Como esta especificação foi usada.** O projeto segue desenvolvimento guiado por especificação: o analista define o problema, as restrições e os critérios de aceite; um agente de IA implementa a partir deste documento; o analista revisa e valida o resultado contra os critérios da seção 8.
 
 ---
 
 ## 1. Contexto
 
-Claude, este é o capstone que vou apresentar sobre modernização de mainframe com agentes de IA. Na pasta `legado/` montamos um sistema bancário de exemplo, o de apropriação diária de juros de contratos de crédito:
+Este documento especifica a primeira fase do capstone de modernização mainframe com agentes de IA. A pasta `legado/` contém um sistema bancário de demonstração, com nomes e dados sintéticos: a apropriação diária de juros de contratos de crédito.
 
 | Tipo | Componentes |
 | --- | --- |
@@ -18,25 +22,25 @@ Claude, este é o capstone que vou apresentar sobre modernização de mainframe 
 | COBOL sub-rotina | `JURS0100` — cálculo de juros, mora e multa (via CALL) |
 | Copybooks | `JURCCONT`, `JURCTAXA`, `JURCCALC`, `JURCSAID`, `JURCREJE` |
 
-No dia a dia, o primeiro passo de qualquer modernização é o mesmo: **saber o que existe e como as peças se ligam**. Hoje isso é feito na mão, abrindo fonte por fonte no ISPF, e leva semanas num sistema real. Quero mostrar que esse levantamento pode ser automatizado com uma ferramenta simples, sob controle do analista.
+No dia a dia, o primeiro passo de qualquer modernização é o mesmo: **saber o que existe e como as peças se ligam**. Hoje isso é feito manualmente, abrindo fonte por fonte no ISPF, e leva semanas num sistema real. Esta fase demonstra que esse levantamento pode ser automatizado com uma ferramenta simples, sob controle do analista.
 
 ## 2. Objetivo
 
-Preciso de um programa Python que leia os fontes da pasta `legado/` e gere um **inventário estruturado** em dois formatos:
+Desenvolver um programa Python que leia os fontes da pasta `legado/` e gere um **inventário estruturado** em dois formatos:
 
 - `saida/inventario.json` — para ser consumido por outras ferramentas e agentes;
 - `saida/inventario.md` — para leitura humana e para a apresentação.
 
-## 3. Princípio de arquitetura (importante)
+## 3. Princípio de arquitetura (obrigatório)
 
 O inventário tem duas camadas, e elas não podem se misturar:
 
-1. **Fatos (parser determinístico).** Tudo que é estrutura sai de um parser feito em Python, sem IA: steps, programas, DDs, datasets, CALLs, COPYs, layouts de registro, posições e tamanhos. Precisa ser reproduzível: rodou duas vezes, sai igual.
+1. **Fatos (parser determinístico).** Tudo que é estrutura sai de um parser feito em Python, sem IA: steps, programas, DDs, datasets, CALLs, COPYs, layouts de registro, posições e tamanhos. O resultado deve ser reproduzível: duas execuções sobre os mesmos fontes geram o mesmo inventário.
 2. **Interpretação (IA local).** Resumo de negócio, regras e riscos de cada programa e de cada job ficam com um modelo rodando no **Ollama local**. A IA recebe os fatos já extraídos mais o fonte e só interpreta; não inventa estrutura.
 
-Motivo: em banco, inventário errado é pior que nenhum. E nenhum fonte pode sair do ambiente da instituição, por isso nada de API externa, só o modelo local.
+Justificativa: em banco, um inventário errado é pior que nenhum. Além disso, nenhum fonte pode sair do ambiente da instituição, o que exclui APIs externas; só o modelo local é permitido.
 
-Se o Ollama estiver fora do ar, o programa precisa gerar o inventário de fatos normalmente e só avisar que a parte de IA ficou de fora. Também quero uma opção `--sem-ia`.
+Se o Ollama estiver indisponível, o programa deve gerar o inventário de fatos normalmente e apenas avisar que a interpretação por IA não foi incluída. O programa também deve oferecer a opção `--sem-ia`.
 
 ## 4. O que o parser precisa extrair
 
