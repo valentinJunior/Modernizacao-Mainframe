@@ -65,7 +65,9 @@ A estação tem só o JRE 25, sem `javac`. O build roda no contêiner `eclipse-t
 - 2 vêm diretamente da Documentação Técnica JURD0100 (R$ 4.383,33 e R$ 67,67);
 - os outros 25 (bordas, empates de meio centavo e rejeições) foram gerados por `ferramentas/referencia_jurs0100.py`, uma implementação de referência em Python, independente do Java, escrita a partir da semântica do COBOL.
 
-**Isso não substitui a massa real.** O próximo passo é extrair o JUROSOUT de uma execução do JURD0100 no mainframe, converter de EBCDIC/COMP-3 para CSV e acrescentar as linhas ao mesmo arquivo.
+**Validação contra o COBOL real (25/11/2026).** Os 27 casos foram executados na `JURS0100` original, compilada com GnuCOBOL 3.2 em modo `-std=ibm` (pasta `equivalencia-cobol/` na raiz do projeto). Os 27 bateram com o `casos.csv` em todos os campos, então a massa deixou de depender só da implementação de referência.
+
+**Isso ainda não substitui a massa real**, porque GnuCOBOL não é o compilador de produção. O próximo passo é extrair o JUROSOUT de uma execução do JURD0100 no mainframe, converter de EBCDIC/COMP-3 para CSV e acrescentar as linhas ao mesmo arquivo.
 
 ## D11 — Casos de empate de meio centavo
 

@@ -1,0 +1,4 @@
+# Ambiente de compilacao e execucao COBOL (GnuCOBOL 3.2) para a prova de equivalencia
+FROM docker.io/library/fedora:44
+RUN dnf install -y gnucobol && dnf clean all
+WORKDIR /tmp/build

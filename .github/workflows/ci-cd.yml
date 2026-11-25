@@ -1,0 +1,117 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Fase 1: o inventario de fatos precisa rodar sem erro (sem IA no CI:
+  # o Ollama e local por desenho, nenhum fonte sai da maquina).
+  # ---------------------------------------------------------------------------
+  inventario:
+    name: Inventário (parser, sem IA)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Gerar inventário de fatos
+        run: python3 inventario_mainframe.py --fontes legado --saida "$RUNNER_TEMP/inventario" --sem-ia
+      - name: Conferir saídas
+        run: |
+          test -s "$RUNNER_TEMP/inventario/inventario.json"
+          test -s "$RUNNER_TEMP/inventario/inventario.md"
+          python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$RUNNER_TEMP/inventario/inventario.json"
+
+  # ---------------------------------------------------------------------------
+  # Fase 3: build e os 53 testes do microservico, inclusive a equivalencia.
+  # ---------------------------------------------------------------------------
+  servico-juros:
+    name: Microserviço (build e testes)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: servico-juros
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      - name: Build e testes
+        run: ./mvnw -B verify
+      - name: Relatório dos testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-testes
+          path: servico-juros/target/surefire-reports/
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # Prova de equivalencia: a JURS0100 ORIGINAL compilada com GnuCOBOL tem de
+  # produzir exatamente o mesmo resultado que o Java espera (casos.csv).
+  # ---------------------------------------------------------------------------
+  equivalencia-cobol:
+    name: Equivalência COBOL x Java (GnuCOBOL)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Compilar a JURS0100 e comparar com a massa do Java
+        env:
+          CONTAINER: docker
+        run: ./equivalencia-cobol/executar.sh
+      - name: Guardar a saída do COBOL
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saida-cobol
+          path: |
+            equivalencia-cobol/saida-cobol.csv
+            equivalencia-cobol/versao-compilador.txt
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # CD: so na main e so se tudo acima passou. Publica a imagem do servico
+  # no GitHub Container Registry (ghcr.io).
+  # ---------------------------------------------------------------------------
+  publicar-imagem:
+    name: Publicar imagem (GHCR)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [inventario, servico-juros, equivalencia-cobol]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Nome da imagem em minúsculas
+        run: echo "IMAGEM=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/servico-juros" >> "$GITHUB_ENV"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: servico-juros
+          push: true
+          tags: |
+            ${{ env.IMAGEM }}:latest
+            ${{ env.IMAGEM }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.description=Microserviço de cálculo de encargos equivalente à JURS0100

@@ -93,7 +93,7 @@ Cada método do domínio aponta no Javadoc o parágrafo COBOL de origem.
 
 ## Massa de equivalência
 
-O `casos.csv` é a prova de que o Java calcula igual ao COBOL, centavo a centavo. Qualquer diferença falha o build. Para incluir a massa real do mainframe, basta converter o arquivo `BCO.JUR.APROP.JUROS` (layout JURCSAID) para o mesmo formato e acrescentar as linhas. Detalhes em `DECISOES.md` (D10).
+O `casos.csv` é a prova de que o Java calcula igual ao COBOL, centavo a centavo. Qualquer diferença falha o build. Os 27 casos foram conferidos contra a `JURS0100` original compilada com GnuCOBOL (`../equivalencia-cobol/`), com 27 de 27 idênticos. Para incluir a massa real do mainframe, basta converter o arquivo `BCO.JUR.APROP.JUROS` (layout JURCSAID) para o mesmo formato e acrescentar as linhas. Detalhes em `DECISOES.md` (D10).
 
 ## Segurança
 

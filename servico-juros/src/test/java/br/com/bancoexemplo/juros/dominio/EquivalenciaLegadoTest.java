@@ -14,8 +14,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Equivalencia com o legado, centavo a centavo.
  *
  * <p>Cada linha de casos.csv tem a entrada e o resultado esperado. Hoje a massa
- * vem da documentacao e da implementacao de referencia (ferramentas/); quando a
- * massa real do JUROSOUT for extraida do mainframe, entra no mesmo arquivo.
+ * vem da documentacao e da implementacao de referencia (ferramentas/), e foi
+ * conferida contra a JURS0100 original compilada com GnuCOBOL
+ * (../equivalencia-cobol/: 27 de 27 identicos). Quando a massa real do JUROSOUT
+ * for extraida do mainframe, entra no mesmo arquivo.
  * A comparacao e por texto (toPlainString): escala diferente tambem falha.
  */
 class EquivalenciaLegadoTest {
