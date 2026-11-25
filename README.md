@@ -6,7 +6,27 @@ Capstone que percorre o ciclo completo de modernização de um sistema bancário
 2. **Documentação:** regras de negócio, códigos de rejeição, exemplo numérico e riscos, produzidos a partir do inventário.
 3. **Conversão:** `servico-juros/`, microserviço Java com o mesmo cálculo da sub-rotina COBOL `JURS0100`, provado por testes de equivalência centavo a centavo.
 
-📊 **Apresentação:** [`docs/apresentacao.pdf`](docs/apresentacao.pdf)
+## Apresentação
+
+Os 12 slides estão logo abaixo, como imagens. O PDF fica em [`docs/apresentacao.pdf`](docs/apresentacao.pdf). Se o visualizador do GitHub não abrir, use o [download direto](https://raw.githubusercontent.com/valentinJunior/Modernizacao-Mainframe/main/docs/apresentacao.pdf).
+
+<details open>
+<summary><b>Ver os slides</b></summary>
+
+![Slide 1: Capa](docs/slides/slide-01.png)
+![Slide 2: O sistema legado](docs/slides/slide-02.png)
+![Slide 3: As três fases](docs/slides/slide-03.png)
+![Slide 4: Fatos e interpretação](docs/slides/slide-04.png)
+![Slide 5: Resultado do inventário](docs/slides/slide-05.png)
+![Slide 6: Achados automáticos](docs/slides/slide-06.png)
+![Slide 7: O microserviço](docs/slides/slide-07.png)
+![Slide 8: Exemplo numérico](docs/slides/slide-08.png)
+![Slide 9: Prova de equivalência](docs/slides/slide-09.png)
+![Slide 10: Divergências](docs/slides/slide-10.png)
+![Slide 11: Como executar](docs/slides/slide-11.png)
+![Slide 12: Próximos passos](docs/slides/slide-12.png)
+
+</details>
 
 ## Estrutura
 
@@ -17,7 +37,7 @@ Capstone que percorre o ciclo completo de modernização de um sistema bancário
 | `saida/` | Inventário gerado, em JSON e Markdown |
 | `servico-juros/` | Microserviço Java (fase 3), com README próprio |
 | `spec.md`, `spec-microservico-java.md` | Especificações das fases 1 e 3 |
-| `docs/` | Slides da apresentação em PDF |
+| `docs/` | Slides da apresentação, em PDF e em imagens (`docs/slides/`) |
 
 ## Como executar
 

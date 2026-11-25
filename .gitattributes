@@ -1,0 +1,12 @@
+# Arquivos binários: o Git nunca converte fim de linha nem tenta mostrar diff de texto
+*.pdf  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+
+# Fontes mainframe e scripts com fim de linha Unix
+*.cbl text eol=lf
+*.cpy text eol=lf
+*.jcl text eol=lf
+*.py  text eol=lf
+*.md  text eol=lf
