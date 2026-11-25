@@ -1,5 +1,7 @@
 # Decisões técnicas — servico-juros
 
+🇧🇷 Português | [🇺🇸 English](DECISOES.en.md)
+
 Registro das decisões tomadas na conversão do JURB0100/JURS0100. Cada uma referencia a seção do `spec-microservico-java.md` que a motivou.
 
 ## D1 — `BigDecimal` com as escalas do COBOL (spec §4)

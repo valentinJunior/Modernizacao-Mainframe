@@ -1,5 +1,7 @@
 # Spec — Inventário automático de componentes mainframe
 
+🇧🇷 Português | [🇺🇸 English](spec.en.md)
+
 **Projeto:** Capstone de Modernização Mainframe com Agentes de IA
 **Autor:** Jair Valentin, analista mainframe
 **Data:** 24/11/2026

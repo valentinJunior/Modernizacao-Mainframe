@@ -1,5 +1,7 @@
 # Spec — Conversão do cálculo de juros (JURB0100/JURS0100) para microserviço Java
 
+🇧🇷 Português | [🇺🇸 English](spec-microservico-java.en.md)
+
 **Projeto:** Capstone de Modernização Mainframe com Agentes de IA
 **Autor:** Jair Valentin, analista mainframe
 **Data:** 24/11/2026

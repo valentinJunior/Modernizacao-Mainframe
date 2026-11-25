@@ -1,5 +1,7 @@
 # servico-juros
 
+🇧🇷 Português | [🇺🇸 English](README.en.md)
+
 Microserviço de cálculo de encargos de contratos de crédito: juros remuneratórios, juros de mora e multa. É o equivalente Java da sub-rotina **JURS0100** e da busca de taxa do **JURB0100**, do job batch **JURD0100**.
 
 O escopo é a **regra de cálculo**, não o job. O unload do DB2, os sorts, o resumo para a contabilidade e o reprocessamento via GDG continuam no mainframe, e o batch continua oficial. Este serviço é a fase 1 do plano de adoção (modo sombra), descrita no `spec-microservico-java.md`.

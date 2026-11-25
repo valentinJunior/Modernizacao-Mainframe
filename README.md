@@ -1,5 +1,7 @@
 # Modernização Mainframe com agentes de IA
 
+🇧🇷 Português | [🇺🇸 English](README.en.md)
+
 [![CI/CD](https://github.com/valentinJunior/Modernizacao-Mainframe/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/valentinJunior/Modernizacao-Mainframe/actions/workflows/ci-cd.yml)
 
 Capstone que percorre, em escala didática, as três etapas de uma modernização com apoio de agentes de IA. O sistema é a apropriação diária de juros de contratos de crédito (job `JURD0100`):

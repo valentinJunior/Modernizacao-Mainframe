@@ -1,5 +1,7 @@
 # Divergências em relação ao legado
 
+🇧🇷 Português | [🇺🇸 English](DIVERGENCIAS.en.md)
+
 Toda diferença de comportamento entre o `servico-juros` e o JURB0100/JURS0100 é registrada aqui, para decisão da área de negócio. Nenhuma regra de cálculo (RN01 a RN05) foi alterada. Linhas resolvidas ficam na tabela como histórico.
 
 | # | Situação | Legado (COBOL) | Serviço Java | Status |

@@ -1,5 +1,7 @@
 # Equivalência com o COBOL real
 
+🇧🇷 Português | [🇺🇸 English](README.en.md)
+
 Esta pasta compila e executa a sub-rotina **JURS0100 original**, de `legado/cobol/`, sem nenhuma alteração. Ela roda a mesma massa de casos que os testes do `servico-juros` usam e compara os dois resultados campo a campo.
 
 ```bash
