@@ -51,7 +51,21 @@ python3 inventario_mainframe.py            # com IA local (qwen2.5:7b no Ollama)
 python3 inventario_mainframe.py --sem-ia   # só os fatos
 ```
 
-**Microserviço** (Podman ou Docker; não precisa de JDK local):
+**Microserviço, pela imagem publicada** (o jeito mais rápido; não precisa baixar o código):
+
+```bash
+podman run --rm -p 8080:8080 ghcr.io/valentinjunior/servico-juros:latest   # ou docker run
+```
+
+Depois, teste com o exemplo da documentação técnica, que deve retornar `"totalEncargos": 4383.33`:
+
+```bash
+curl -s -X POST localhost:8080/v1/encargos/calcular -H 'Content-Type: application/json' \
+  -d '{"numeroContrato":"000012345678","codigoProduto":"CDC","rating":"B","saldoDevedor":100000.00,
+       "dataUltimaApuracao":"2026-10-25","dataVencimento":"2026-11-14","dataReferencia":"2026-11-24"}'
+```
+
+**Microserviço, compilando a partir do código** (Podman ou Docker; não precisa de JDK local):
 
 ```bash
 cd servico-juros
@@ -71,7 +85,7 @@ Todo push e pull request roda três verificações no GitHub Actions (`.github/w
 | Microserviço | Build e os 53 testes do `servico-juros`, inclusive a equivalência |
 | Equivalência COBOL x Java | A `JURS0100` original, compilada com GnuCOBOL, produz exatamente o resultado esperado pelo Java |
 
-Na `main`, se as três passarem, a imagem do serviço é publicada em `ghcr.io/valentinjunior/servico-juros`, com as tags `latest` e o hash do commit.
+Na `main`, se as três passarem, a imagem do serviço é publicada em [`ghcr.io/valentinjunior/servico-juros`](https://github.com/valentinJunior/Modernizacao-Mainframe/pkgs/container/servico-juros), com as tags `latest` e o hash do commit. A imagem é pública, então qualquer pessoa consegue executar exatamente a versão que passou nos testes de equivalência.
 
 ## Resultados
 
