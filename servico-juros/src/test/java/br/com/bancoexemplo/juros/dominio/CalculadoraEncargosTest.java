@@ -3,6 +3,9 @@ package br.com.bancoexemplo.juros.dominio;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
 
@@ -99,6 +102,31 @@ class CalculadoraEncargosTest {
         ResultadoCalculo r = CalculadoraEncargos.calcular(
                 entrada("B", "12345678901234.00", "2026-10-25", "2026-11-14", "2026-11-24"), TABELA);
         assertThat(r.saldoDevedor()).isEqualByComparingTo("2345678901234.00");
+    }
+
+    /**
+     * Achado de revisao externa (DECISOES.md, D12): notacao cientifica levava a
+     * 44 s de CPU ("1E+50000000") ou a ArithmeticException ("1E+999999999").
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"1E+50000000", "1E+999999999", "1E+3", "1e5", "0x10", ".5", "1.",
+            "NaN", "Infinity", "1234567890123456789.00", "1.0000000001"})
+    @Timeout(2)
+    void saldoForaDoFormatoDecimalSimplesERejeitadoComo21SemCusto(String saldo) {
+        assertThatThrownBy(() -> CalculadoraEncargos.calcular(
+                entrada("B", saldo, "2026-10-25", "2026-11-14", "2026-11-24"), TABELA))
+                .isInstanceOfSatisfying(RejeicaoException.class,
+                        e -> assertThat(e.codigo()).isEqualTo(CodigoRejeicao.SALDO_NAO_NUMERICO));
+    }
+
+    @Test
+    @Timeout(2)
+    void saldoGiganteERejeitadoSemConverter() {
+        String gigante = "9".repeat(5_000_000);
+        assertThatThrownBy(() -> CalculadoraEncargos.calcular(
+                entrada("B", gigante, "2026-10-25", "2026-11-14", "2026-11-24"), TABELA))
+                .isInstanceOfSatisfying(RejeicaoException.class,
+                        e -> assertThat(e.codigo()).isEqualTo(CodigoRejeicao.SALDO_NAO_NUMERICO));
     }
 
     @Test

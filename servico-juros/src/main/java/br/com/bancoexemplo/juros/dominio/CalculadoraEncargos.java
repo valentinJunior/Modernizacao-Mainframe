@@ -5,6 +5,7 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.regex.Pattern;
 
 /**
  * Equivalente Java da sub-rotina JURS0100.
@@ -29,6 +30,13 @@ public final class CalculadoraEncargos {
     /** S9(13)V99: so cabem 13 digitos inteiros; o resto e truncado pela esquerda. */
     private static final BigDecimal LIMITE_INTEIROS_SALDO = BigDecimal.TEN.pow(13);
     private static final MathContext PRECISAO = MathContext.DECIMAL128;
+    /**
+     * Formato aceito para o saldo: sinal opcional, ate 18 digitos inteiros e ate 9
+     * decimais. Sem notacao cientifica: um texto como "1E+50000000" faria o
+     * BigDecimal operar com milhoes de digitos (DECISOES.md, D12).
+     */
+    private static final Pattern FORMATO_SALDO = Pattern.compile("-?\\d{1,18}(\\.\\d{1,9})?");
+    private static final int TAMANHO_MAXIMO_SALDO = 40;
 
     private CalculadoraEncargos() {
     }
@@ -88,15 +96,18 @@ public final class CalculadoraEncargos {
      * Valida e converte o saldo (codigo 21) com a semantica do MOVE para
      * S9(13)V99: casas alem da segunda sao truncadas e digitos inteiros alem do
      * 13o sao descartados pela esquerda, sem aviso, exatamente como no COBOL
-     * (ver DIVERGENCIAS.md, V1 - decisao: manter fidelidade ao legado).
+     * (ver DIVERGENCIAS.md, V1 - o dominio mantem a fidelidade ao legado; quem
+     * recusa saldo acima da capacidade e a borda da API).
+     *
+     * <p>Antes da conversao, o texto precisa ser um decimal simples (D12): notacao
+     * cientifica, hexadecimal ou texto longo demais sao "conteudo nao numerico".
      */
     static BigDecimal converterSaldo(String texto, String contrato) {
-        BigDecimal saldo;
-        try {
-            saldo = new BigDecimal(texto == null ? "" : texto.trim());
-        } catch (NumberFormatException e) {
+        String limpo = texto == null ? "" : texto.trim();
+        if (limpo.length() > TAMANHO_MAXIMO_SALDO || !FORMATO_SALDO.matcher(limpo).matches()) {
             throw new RejeicaoException(CodigoRejeicao.SALDO_NAO_NUMERICO, contrato);
         }
+        BigDecimal saldo = new BigDecimal(limpo);
         // remainder preserva o sinal do dividendo, como a truncagem de magnitude do COBOL
         return saldo.setScale(ESCALA_VALOR, RoundingMode.DOWN).remainder(LIMITE_INTEIROS_SALDO);
     }

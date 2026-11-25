@@ -35,7 +35,7 @@ jobs:
           python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$RUNNER_TEMP/inventario/inventario.json"
 
   # ---------------------------------------------------------------------------
-  # Fase 3: build e os 53 testes do microservico, inclusive a equivalencia.
+  # Fase 3: build e os 72 testes do microservico, inclusive a equivalencia.
   # ---------------------------------------------------------------------------
   servico-juros:
     name: Microserviço (build e testes)

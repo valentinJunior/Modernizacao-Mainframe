@@ -74,3 +74,19 @@ A estação tem só o JRE 25, sem `javac`. O build roda no contêiner `eclipse-t
 Um teste de mutação (trocar `HALF_UP` por `HALF_EVEN` na calculadora) mostrou que a primeira versão da massa não detectava a troca: nenhum caso caía exatamente no meio centavo. Foram incluídos `empate_meio_centavo_multa` (multa de 2,005 → 2,01) e `empate_meio_centavo_mora` (mora de 0,005 → 0,01). Com eles, a mesma mutação derruba 2 casos.
 
 Quando a massa real do mainframe chegar, vale repetir esse teste de mutação para confirmar que ela também cobre os empates.
+
+## D12 — Formato do saldo validado antes do `BigDecimal` (achado de revisão externa)
+
+**Problema.** O saldo chega como texto (D3) e era convertido direto com `new BigDecimal(texto)`, que aceita notação científica. Uma revisão externa encontrou, e foi reproduzido na imagem publicada:
+
+| Saldo enviado | Antes da correção |
+| --- | --- |
+| `"1E+50000000"` | 44 s de CPU numa única requisição, terminando com código 20, uma mensagem errada. Com o lote de 1.000 contratos, uma requisição pode travar o serviço (negação de serviço) |
+| `"1E+999999999"` | `ArithmeticException` sem tratamento e HTTP 500 |
+| `"1E+3"` | Aceito como 1.000,00, um formato que o COBOL nunca recebe |
+
+**Decisão.** Antes de converter, o texto precisa casar com `-?\d{1,18}(\.\d{1,9})?` e ter no máximo 40 caracteres. Fora disso, o saldo é "conteúdo não numérico", código 21, o mesmo que o COBOL devolve para dado inválido no campo. O custo da conversão fica limitado, qualquer que seja a entrada.
+
+**Testes.** 15 casos novos, com limite de tempo, cobrem notação científica, hexadecimal, `NaN`, `Infinity`, texto de 5 milhões de dígitos, o lote e a regra da V1. Com o código antigo, os 15 falham.
+
+**Lição registrada.** A primeira versão foi gerada por agente de IA e passou nos 53 testes originais, porque nenhum deles explorava entrada hostil. A falha foi pega por revisão humana. Testes de equivalência provam que o cálculo está certo, mas não substituem a revisão de segurança da borda.

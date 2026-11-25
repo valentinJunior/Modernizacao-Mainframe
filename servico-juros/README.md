@@ -2,14 +2,14 @@
 
 Microserviço de cálculo de encargos de contratos de crédito: juros remuneratórios, juros de mora e multa. É o equivalente Java da sub-rotina **JURS0100** e da busca de taxa do **JURB0100**, do job batch **JURD0100**.
 
-O batch no mainframe continua oficial. Este serviço é a fase 1 do plano de adoção (modo sombra), descrita no `spec-microservico-java.md`.
+O escopo é a **regra de cálculo**, não o job. O unload do DB2, os sorts, o resumo para a contabilidade e o reprocessamento via GDG continuam no mainframe, e o batch continua oficial. Este serviço é a fase 1 do plano de adoção (modo sombra), descrita no `spec-microservico-java.md`.
 
 ## Como rodar
 
 Pré-requisito: Podman ou Docker. Não é preciso ter JDK nem Maven na máquina.
 
 ```bash
-# build da imagem (compila e roda os 53 testes, inclusive a equivalência com o legado)
+# build da imagem (compila e roda os 72 testes, inclusive a equivalência com o legado)
 podman build -t servico-juros:1.0 .
 
 # sobe o serviço
@@ -76,6 +76,14 @@ São os mesmos do legado, para conciliar com o arquivo `BCO.JUR.APROP.REJEITOS`:
 | 33 | Data de referência inválida | 400 |
 | 40 | Rating não reconhecido | 422 |
 
+Código exclusivo do serviço, sem equivalente no legado:
+
+| Código | Motivo | HTTP |
+| --- | --- | --- |
+| ENTRADA_INVALIDA | Requisição mal formada, ou saldo com mais de 13 dígitos inteiros, que o COBOL truncaria em silêncio (`DIVERGENCIAS.md`, V1) | 400 |
+
+Saldo em notação científica, hexadecimal ou com mais de 18 dígitos inteiros é tratado como não numérico (código 21). Ver `DECISOES.md`, D12.
+
 ## Estrutura
 
 ```
@@ -93,7 +101,7 @@ Cada método do domínio aponta no Javadoc o parágrafo COBOL de origem.
 
 ## Massa de equivalência
 
-O `casos.csv` é a prova de que o Java calcula igual ao COBOL, centavo a centavo. Qualquer diferença falha o build. Os 27 casos foram conferidos contra a `JURS0100` original compilada com GnuCOBOL (`../equivalencia-cobol/`), com 27 de 27 idênticos. Para incluir a massa real do mainframe, basta converter o arquivo `BCO.JUR.APROP.JUROS` (layout JURCSAID) para o mesmo formato e acrescentar as linhas. Detalhes em `DECISOES.md` (D10).
+O `casos.csv` define o resultado esperado de cada caso, e qualquer diferença de um centavo falha o build. Os 27 casos foram conferidos contra a `JURS0100` original compilada com GnuCOBOL (`../equivalencia-cobol/`), com 27 de 27 idênticos. Isso demonstra equivalência com o COBOL compilado em GnuCOBOL, não com o Enterprise COBOL do z/OS: a validação definitiva depende da massa real. Para incluir a massa real do mainframe, basta converter o arquivo `BCO.JUR.APROP.JUROS` (layout JURCSAID) para o mesmo formato e acrescentar as linhas. Detalhes em `DECISOES.md` (D10).
 
 ## Segurança
 

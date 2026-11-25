@@ -1,6 +1,9 @@
 package br.com.bancoexemplo.juros.api;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -92,6 +95,30 @@ class EncargosApiTest {
                 .andExpect(jsonPath("$.codigo").value("21"));
     }
 
+    /** Achado de revisao externa (D12): antes, 44 s de CPU e HTTP 500. */
+    @ParameterizedTest
+    @ValueSource(strings = {"\"1E+50000000\"", "\"1E+999999999\"", "1E+999999999", "1E+3"})
+    @Timeout(10)
+    void saldoEmNotacaoCientificaERecusadoNaHoraComCodigo21(String saldo) throws Exception {
+        calcular(EXEMPLO.replace("100000.00", saldo))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("21"));
+    }
+
+    @Test
+    void saldoComMaisDe13DigitosInteirosERecusadoNaApi() throws Exception {
+        // DIVERGENCIAS.md, V1: o dominio truncaria como o MOVE; a API recusa
+        calcular(EXEMPLO.replace("100000.00", "\"12345678901234.00\""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("ENTRADA_INVALIDA"));
+    }
+
+    @Test
+    void saldoNoLimiteDe13DigitosInteirosEAceito() throws Exception {
+        calcular(EXEMPLO.replace("100000.00", "\"0009999999999999.99\""))
+                .andExpect(status().isOk());
+    }
+
     @Test
     void dataInexistenteDevolveCodigo30() throws Exception {
         calcular(EXEMPLO.replace("2026-10-25", "2026-02-30"))
@@ -139,6 +166,18 @@ class EncargosApiTest {
                 .andExpect(jsonPath("$.itens[1].status").value("REJEITADO"))
                 .andExpect(jsonPath("$.itens[1].erro.codigo").value("40"))
                 .andExpect(jsonPath("$.itens[2].status").value("CALCULADO"));
+    }
+
+    @Test
+    void loteComSaldoAcimaDaCapacidadeRecusaSoAqueleContrato() throws Exception {
+        String grande = EXEMPLO.replace("000012345678", "000000000002").replace("100000.00", "\"12345678901234.00\"");
+        String lote = "{\"contratos\": [" + EXEMPLO + "," + grande + "]}";
+
+        mvc.perform(post("/v1/encargos/calcular-lote").contentType(MediaType.APPLICATION_JSON).content(lote))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.calculados").value(1))
+                .andExpect(jsonPath("$.itens[1].status").value("REJEITADO"))
+                .andExpect(jsonPath("$.itens[1].erro.codigo").value("ENTRADA_INVALIDA"));
     }
 
     @Test
