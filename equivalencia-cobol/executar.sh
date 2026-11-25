@@ -10,7 +10,7 @@ IMAGEM="gnucobol-jur:3.2"
 CASOS="servico-juros/src/test/resources/equivalencia/casos.csv"
 
 echo "[1/3] Preparando imagem GnuCOBOL..."
-"$MOTOR" build -q -t "$IMAGEM" "$RAIZ/equivalencia-cobol" >/dev/null
+"$MOTOR" build -q -t "$IMAGEM" -f "$RAIZ/equivalencia-cobol/Containerfile" "$RAIZ/equivalencia-cobol" >/dev/null
 
 echo "[2/3] Compilando JURS0100 (sem alteracao) e JURT0100, rodando a massa..."
 "$MOTOR" run --rm -v "$RAIZ":/w:Z "$IMAGEM" bash -euo pipefail -c "
@@ -19,7 +19,8 @@ echo "[2/3] Compilando JURS0100 (sem alteracao) e JURT0100, rodando a massa..."
   tail -n +2 /w/$CASOS | cut -d';' -f1-9 > entrada.csv
   COB_LIBRARY_PATH=. ./jurt0100
   cp saida.csv /w/equivalencia-cobol/saida-cobol.csv
-  cobc --version | head -1 > /w/equivalencia-cobol/versao-compilador.txt
+  cobc --version > versao.txt
+  head -n 1 versao.txt > /w/equivalencia-cobol/versao-compilador.txt
 "
 
 echo "[3/3] Comparando COBOL x Java..."

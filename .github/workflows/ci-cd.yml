@@ -54,7 +54,7 @@ jobs:
         run: ./mvnw -B verify
       - name: Relatório dos testes
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: relatorio-testes
           path: servico-juros/target/surefire-reports/
@@ -75,7 +75,7 @@ jobs:
         run: ./equivalencia-cobol/executar.sh
       - name: Guardar a saída do COBOL
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: saida-cobol
           path: |
