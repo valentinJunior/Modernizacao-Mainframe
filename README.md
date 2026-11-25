@@ -34,7 +34,7 @@ O que fica dessa experiência:
 
 ## Apresentação
 
-Os 12 slides estão logo abaixo, como imagens. O PDF fica em [`docs/apresentacao.pdf`](docs/apresentacao.pdf). Se o visualizador do GitHub não abrir, use o [download direto](https://raw.githubusercontent.com/valentinJunior/Modernizacao-Mainframe/main/docs/apresentacao.pdf).
+Os 13 slides estão logo abaixo, como imagens. O PDF fica em [`docs/apresentacao.pdf`](docs/apresentacao.pdf). Se o visualizador do GitHub não abrir, use o [download direto](https://raw.githubusercontent.com/valentinJunior/Modernizacao-Mainframe/main/docs/apresentacao.pdf).
 
 <details open>
 <summary><b>Ver os slides</b></summary>
@@ -49,8 +49,9 @@ Os 12 slides estão logo abaixo, como imagens. O PDF fica em [`docs/apresentacao
 ![Slide 8: Exemplo numérico](docs/slides/slide-08.png)
 ![Slide 9: Prova de equivalência](docs/slides/slide-09.png)
 ![Slide 10: Divergências](docs/slides/slide-10.png)
-![Slide 11: Valor para o banco](docs/slides/slide-11.png)
-![Slide 12: Próximos passos](docs/slides/slide-12.png)
+![Slide 11: Como a IA foi usada](docs/slides/slide-11.png)
+![Slide 12: Valor para o banco](docs/slides/slide-12.png)
+![Slide 13: Próximos passos](docs/slides/slide-13.png)
 
 </details>
 
